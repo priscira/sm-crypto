@@ -1,0 +1,15 @@
+pthumeru.ihyll
+
+**/.idea/
+
+**/.venv/
+**/.pdm-python
+**/pdm.lock
+**/.python-version
+**/.py[cod]
+**/__pycache__/
+**/.mypy_cache/
+**/.pytest_cache/
+**/.ruff_cache/
+**/*.egg-info/
+

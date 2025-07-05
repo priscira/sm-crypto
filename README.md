@@ -16,3 +16,8 @@
 ## 使用示例
 
 对于各语言的模块调用示例，请参考各语言的文件夹中的`README.md`。
+
+## 其他
+
+- 原项目地址：[`sm-crypto`](https://github.com/JuneAndGreen/sm-crypto)
+- 原作者主页：[`JuneAndGreen`](https://github.com/JuneAndGreen)

@@ -1,6 +1,10 @@
 pthumeru.ihyll
 
 **/.idea/
+**/.theia/
+
+Rust/target/
+Rust/Cargo.lock
 
 **/.venv/
 **/.pdm-python

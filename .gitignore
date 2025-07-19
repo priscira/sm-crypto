@@ -17,3 +17,5 @@ Rust/Cargo.lock
 **/.ruff_cache/
 **/*.egg-info/
 
+Nim/nimcache/
+Nim/testresults/

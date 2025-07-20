@@ -217,3 +217,43 @@ fn gain_start_pos_of_v(talks: &str, start: usize) -> usize {
   let ll = gain_len_of_l(talks, start);
   start + (ll + 1) * 2
 }
+
+
+/// 编码DER
+/// - `r`: `&BigInt`，sm2签名的`r`
+/// - `s`: `&BigInt`，sm2签名的`s`
+pub fn encode_der(r: &BigInt, s: &BigInt) -> String {
+  let der_r = DERInteger::new(r);
+  let der_s = DERInteger::new(s);
+
+  let mut der_seq = DERSequence::new(vec![
+    Box::new(der_r),
+    Box::new(der_s),
+  ]);
+
+  der_seq.get_encoded_hex().to_string()
+}
+
+
+/// 解码DER
+/// - `sg_talks`: `&str`，sm2签名的DER编码字符串
+/// 返回sm2签名的`r`和`s`
+pub fn decode_der(sg_talks: &str) -> (BigInt, BigInt) {
+  // 结构：input = | tSeq | lSeq | vSeq |
+  // vSeq = | tR | lR | vR | tS | lS | vS |
+  let v_start = gain_start_pos_of_v(sg_talks, 0);
+
+  let v_index_r = gain_start_pos_of_v(sg_talks, v_start);
+  let l_r = gain_l(sg_talks, v_start) as usize;
+  let v_r = &sg_talks[v_index_r..v_index_r + l_r * 2];
+
+  let next_start = v_index_r + v_r.len();
+  let v_index_s = gain_start_pos_of_v(sg_talks, next_start);
+  let l_s = gain_l(sg_talks, next_start) as usize;
+  let v_s = &sg_talks[v_index_s..v_index_s + l_s * 2];
+
+  let r = BigInt::parse_bytes(v_r.as_bytes(), 16).unwrap();
+  let s = BigInt::parse_bytes(v_s.as_bytes(), 16).unwrap();
+
+  (r, s)
+}

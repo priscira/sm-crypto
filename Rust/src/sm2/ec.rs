@@ -344,7 +344,6 @@ impl Eq for ECPointFp {}
 /// - `q`: `BigUint`，椭圆曲线所基于的素数字段（有限域）的大素数模数
 /// - `a`: `BigUint`，椭圆曲线方程的`a`项
 /// - `b`: `BigUint`，椭圆曲线方程的`b`项
-/// - `infty`: `Option<ECPointFp>`，椭圆曲线的无穷远点（Point at Infinity），即加法单位元或中性元素
 #[derive(Debug)]
 pub struct ECCurveFp {
   pub q: BigUint,

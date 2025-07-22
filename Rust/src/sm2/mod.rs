@@ -1,5 +1,5 @@
 pub mod ec;
-mod asn1;
-mod sm3;
-mod util;
-mod sm2;
+pub mod asn1;
+pub mod sm3;
+pub mod util;
+

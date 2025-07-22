@@ -1,20 +1,33 @@
 use std::rc::Rc;
-use num_bigint::{BigUint, ToBigUint};
+use num_bigint::{BigInt, BigUint, ToBigInt, ToBigUint};
 use num_traits::{One, Zero};
 
 
 /// 计算`dial`在`mod inv_mod`下的乘法逆元，即$dial ^ {-1} \mod inv\_mod$。
 pub fn calculate_inverse_mod(dial: &BigUint, inv_mod: &BigUint) -> Option<BigUint> {
-  let mut mn = (inv_mod.clone(), dial.clone());
-  let mut xy = (BigUint::zero(), BigUint::one());
+  let mut a = inv_mod.to_bigint().unwrap();
+  let mut b = dial.to_bigint().unwrap();
+  let mut x0 = BigInt::zero();
+  let mut x1 = BigInt::one();
 
-  while mn.1 != BigUint::zero() {
-    let q = &mn.0 / &mn.1;
-    mn = (mn.1.clone(), &mn.0 - &q * &mn.1);
-    xy = (xy.1.clone(), &xy.0 - &q * &xy.1);
+  while b != BigInt::zero() {
+    let q = &a / &b;
+    let r = &a % &b;
+    a = b;
+    b = r;
+
+    let tmp = x0 - &q * &x1;
+    x0 = x1;
+    x1 = tmp;
   }
 
-  if mn.0 != BigUint::one() { None } else { Some(xy.0 % inv_mod) }
+  if a != BigInt::one() {
+    return None; // 无逆元
+  }
+
+  // 可能为负，调整为正模
+  let result = (x0 % inv_mod.to_bigint().unwrap() + inv_mod.to_bigint().unwrap()) % inv_mod.to_bigint().unwrap();
+  result.to_biguint()
 }
 
 

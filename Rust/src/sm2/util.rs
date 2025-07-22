@@ -12,9 +12,9 @@ use crate::sm2::ec::{ECCurveFp, ECPointFp};
 /// - `ec_g`: `ECPointFp`，椭圆曲线基点
 /// - `n`: `BigUint`，椭圆曲线基点阶
 pub struct EcParam {
-  ec_cv: Rc<ECCurveFp>,
-  ec_g: ECPointFp,
-  n: BigUint,
+  pub ec_cv: Rc<ECCurveFp>,
+  pub ec_g: ECPointFp,
+  pub n: BigUint,
 }
 
 

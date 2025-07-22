@@ -84,3 +84,71 @@ fn test_sm2_c1c3c2_crypto() {
   let en_dec_talks = sm2_decrypt(en_enc_talks.unwrap(), private_key.clone(), 1, Some(&mut ec_param));
   println!("c1c2c3_en_dec = {:?}", en_dec_talks);
 }
+
+#[test]
+fn test_sm2_sign_verify() {
+  let mut ec_param = EcParam::new();
+  let (private_key, public_key) = generate_key_pair_hex(None, Some(&ec_param));
+  println!("private_key = {:?}", private_key);
+  println!("public_key = {:?}", public_key);
+
+  let sign = sm2_sign("test message".to_string(), private_key.clone(), false, false, Some(public_key.clone()), None);
+  println!("sign = {:?}", sign);
+
+  let verify = sm2_verify("test message".to_string(), sign.clone(), public_key.clone(), false, false, None);
+  println!("verify = {:?}", verify);
+
+
+  let sign = sm2_sign("test message".to_string(), private_key.clone(), true, false, Some(public_key.clone()), None);
+  println!("sign = {:?}", sign);
+
+  let verify = sm2_verify("test message".to_string(), sign.clone(), public_key.clone(), true, false, None);
+  println!("verify = {:?}", verify);
+
+  let sign = sm2_sign("test message".to_string(), private_key.clone(), false, true, Some(public_key.clone()), None);
+  println!("sign = {:?}", sign);
+
+  let verify = sm2_verify("test message".to_string(), sign.clone(), public_key.clone(), false, true, None);
+  println!("verify = {:?}", verify);
+
+  let sign = sm2_sign("test message".to_string(), private_key.clone(), true, true, Some(public_key.clone()), None);
+  println!("sign = {:?}", sign);
+
+  let verify = sm2_verify("test message".to_string(), sign.clone(), public_key.clone(), true, true, None);
+  println!("verify = {:?}", verify);
+}
+
+#[test]
+fn test_sm2_sign_verify_with_special_user() {
+  let mut ec_param = EcParam::new();
+  let (private_key, public_key) = generate_key_pair_hex(None, Some(&ec_param));
+  println!("private_key = {:?}", private_key);
+  println!("public_key = {:?}", public_key);
+
+  let user_id = Some("pthumerian".to_string());
+
+  let sign = sm2_sign("test message".to_string(), private_key.clone(), false, false, Some(public_key.clone()), user_id.clone());
+  println!("sign = {:?}", sign);
+
+  let verify = sm2_verify("test message".to_string(), sign.clone(), public_key.clone(), false, false, user_id.clone());
+  println!("verify = {:?}", verify);
+
+
+  let sign = sm2_sign("test message".to_string(), private_key.clone(), true, false, Some(public_key.clone()), user_id.clone());
+  println!("sign = {:?}", sign);
+
+  let verify = sm2_verify("test message".to_string(), sign.clone(), public_key.clone(), true, false, user_id.clone());
+  println!("verify = {:?}", verify);
+
+  let sign = sm2_sign("test message".to_string(), private_key.clone(), false, true, Some(public_key.clone()), user_id.clone());
+  println!("sign = {:?}", sign);
+
+  let verify = sm2_verify("test message".to_string(), sign.clone(), public_key.clone(), false, true, user_id.clone());
+  println!("verify = {:?}", verify);
+
+  let sign = sm2_sign("test message".to_string(), private_key.clone(), true, true, Some(public_key.clone()), user_id.clone());
+  println!("sign = {:?}", sign);
+
+  let verify = sm2_verify("test message".to_string(), sign.clone(), public_key.clone(), true, true, user_id.clone());
+  println!("verify = {:?}", verify);
+}

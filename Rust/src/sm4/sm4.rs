@@ -1,7 +1,39 @@
-use crate::sm::CryptoKind;
-use crate::sm::ModeKind;
-use crate::sm::PaddingKind;
-use crate::sm::SmCryptoError;
+use crate::sm4::util::*;
+
+
+#[derive(Debug, PartialEq, Eq)]
+pub enum Sm4Error {
+  CodingError,
+  InvalidKey,
+  InvalidData,
+  PaddingError,
+  EncryptionError,
+  DecryptionError,
+  Other(String),
+}
+
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub enum Sm4CryptoKind {
+  Encrypt,
+  Decrypt,
+}
+
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub enum Sm4ModeKind {
+  Ecb,
+  Cbc,
+}
+
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub enum Sm4PaddingKind {
+  Pkcs5,
+  Pkcs7,
+  NonePad,
+}
+
 
 const ROUND: usize = 32;
 const BLOCK: usize = 16;
@@ -31,27 +63,6 @@ const CK: [u32; 32] = [
   0xa0a7aeb5, 0xbcc3cad1, 0xd8dfe6ed, 0xf4fb0209, 0x10171e25, 0x2c333a41, 0x484f565d, 0x646b7279,
 ];
 
-fn hex_to_array(hex_talks: &str) -> Result<Vec<u8>, SmCryptoError> {
-  match hex::decode(hex_talks) {
-    | Ok(byt_arrs) => Ok(byt_arrs),
-    | Err(_) => Err(SmCryptoError::EnDecodingError),
-  }
-}
-
-fn array_to_hex(byt_arrs: &[u8]) -> String {
-  hex::encode(byt_arrs)
-}
-
-fn utf8_to_array(utf8_talks: &str) -> Vec<u8> {
-  utf8_talks.as_bytes().to_vec()
-}
-
-fn array_to_utf8(byt_arrs: &[u8]) -> Result<String, SmCryptoError> {
-  match std::str::from_utf8(byt_arrs) {
-    | Ok(s) => Ok(s.to_string()),
-    | Err(_) => Err(SmCryptoError::EnDecodingError),
-  }
-}
 
 /// 非线性变换，逐字节查s盒
 /// ## Parameters
@@ -66,20 +77,23 @@ fn byte_sub(dial: u32) -> u32 {
   ])
 }
 
+
 /// 线性变换l，用于给轮函数加密/解密
 fn l1(num: u32) -> u32 {
   num ^ num.rotate_left(2) ^ num.rotate_left(10) ^ num.rotate_left(18) ^ num.rotate_left(24)
 }
+
 
 /// 线性变换l'，扩展密钥
 fn l2(num: u32) -> u32 {
   num ^ num.rotate_left(13) ^ num.rotate_left(23)
 }
 
+
 /// 每32bits作为一个字
-fn to_words(blks: &[u8]) -> Result<[u32; 4], SmCryptoError> {
+fn to_words(blks: &[u8]) -> Result<[u32; 4], Sm4Error> {
   if blks.len() != BLOCK {
-    return Err(SmCryptoError::InvalidData);
+    return Err(Sm4Error::InvalidData);
   }
   Ok([
     u32::from_be_bytes([blks[0], blks[1], blks[2], blks[3]]),
@@ -89,13 +103,14 @@ fn to_words(blks: &[u8]) -> Result<[u32; 4], SmCryptoError> {
   ])
 }
 
+
 /// 对16字节明/密文块执行一次SMS4轮变换
 /// ## Parameters
 /// - blk: 16字节明文或密文块
 /// - rk: list[int]
 /// ## Returns
 /// SMS4轮变换结果
-fn sms4_crypt(blk: &[u8], rk: &[u32]) -> Result<[u8; BLOCK], SmCryptoError> {
+fn sms4_crypt(blk: &[u8], rk: &[u32]) -> Result<[u8; BLOCK], Sm4Error> {
   let words: [u32; 4] = to_words(blk)?;
   let mut words: Vec<u32> = vec![words[0], words[1], words[2], words[3]];
 
@@ -115,13 +130,14 @@ fn sms4_crypt(blk: &[u8], rk: &[u32]) -> Result<[u8; BLOCK], SmCryptoError> {
   Ok(reaps)
 }
 
+
 /// 密钥扩展，将128比特的密钥变成32个32比特的轮密钥
 /// ## Parameters
 /// - master_key: 128比特主密钥
 /// - crypt_kind: 加密还是解密
 /// ## Returns
 /// 32个32比特的轮密钥
-fn sms4_key_ext(mk: &[u8], crypt_kind: &CryptoKind) -> Result<Vec<u32>, SmCryptoError> {
+fn sms4_key_ext(mk: &[u8], crypt_kind: &Sm4CryptoKind) -> Result<Vec<u32>, Sm4Error> {
   let words: [u32; 4] = to_words(mk)?;
   let mut words: Vec<u32> =
     vec![words[0] ^ 0xa3b1bac6, words[1] ^ 0x56aa3350, words[2] ^ 0x677d9197, words[3] ^ 0xb27022dc];
@@ -133,28 +149,30 @@ fn sms4_key_ext(mk: &[u8], crypt_kind: &CryptoKind) -> Result<Vec<u32>, SmCrypto
     words.push(rki);
   }
 
-  if let CryptoKind::Decrypt = crypt_kind {
+  if let Sm4CryptoKind::Decrypt = crypt_kind {
     rks.reverse();
   }
 
   Ok(rks)
 }
 
+
 #[derive(Debug)]
 pub struct Sm4 {
   pub sm4_key: Vec<u8>,
-  padding: PaddingKind,
-  mode: ModeKind,
+  padding: Sm4PaddingKind,
+  mode: Sm4ModeKind,
   iv: Option<Vec<u8>>,
 }
 
+
 impl Sm4 {
   pub fn new<T: ConvertByteArr>(
-    sm4_key: T, padding: PaddingKind, mode: ModeKind, iv: Option<T>,
-  ) -> Result<Self, SmCryptoError> {
+    sm4_key: T, padding: Sm4PaddingKind, mode: Sm4ModeKind, iv: Option<T>,
+  ) -> Result<Self, Sm4Error> {
     let sm4_key = sm4_key.convert_to_byte_arrs(EnDecodingKind::Hex)?;
     if sm4_key.len() != BLOCK {
-      return Err(SmCryptoError::InvalidKey);
+      return Err(Sm4Error::InvalidKey);
     }
     // if let ModeKind::Cbc = mode {
     //   if iv.is_none() || iv.as_ref().unwrap().len() != BLOCK {
@@ -162,14 +180,14 @@ impl Sm4 {
     //   }
     // }
     let iv = match mode {
-      | ModeKind::Cbc => {
-        let iv_ctn = iv.ok_or(SmCryptoError::InvalidData)?;
+      | Sm4ModeKind::Cbc => {
+        let iv_ctn = iv.ok_or(Sm4Error::InvalidData)?;
         let iv_arrs = iv_ctn.convert_to_byte_arrs(EnDecodingKind::Hex)?;
         if iv_arrs.len() != BLOCK {
-          return Err(SmCryptoError::InvalidData);
+          return Err(Sm4Error::InvalidData);
         }
         Some(iv_arrs)
-      },
+      }
       | _ => None,
     };
 
@@ -181,26 +199,26 @@ impl Sm4 {
     })
   }
 
-  fn sm4(&self, mut arrs: Vec<u8>, cp_kind: CryptoKind) -> Result<Vec<u8>, SmCryptoError> {
+  fn sm4(&self, mut arrs: Vec<u8>, cp_kind: Sm4CryptoKind) -> Result<Vec<u8>, Sm4Error> {
     let rk = sms4_key_ext(&self.sm4_key, &cp_kind)?;
     let mut gogga_iv = self.iv.clone().unwrap_or_default();
     let mut reap: Vec<u8> = Vec::new();
 
-    if self.padding != PaddingKind::NonePad && cp_kind != CryptoKind::Decrypt {
+    if self.padding != Sm4PaddingKind::NonePad && cp_kind != Sm4CryptoKind::Decrypt {
       let padl = BLOCK - (arrs.len() % BLOCK);
       arrs.extend(std::iter::repeat(padl as u8).take(padl));
     }
 
     for arri in arrs.chunks_exact(BLOCK) {
       let mut blk = arri.to_vec();
-      if self.mode == ModeKind::Cbc && cp_kind != CryptoKind::Decrypt {
+      if self.mode == Sm4ModeKind::Cbc && cp_kind != Sm4CryptoKind::Decrypt {
         for i in 0..BLOCK {
           blk[i] ^= gogga_iv[i];
         }
       }
       let mut sms4_blk = sms4_crypt(&blk, &rk)?;
-      if self.mode == ModeKind::Cbc {
-        if cp_kind == CryptoKind::Decrypt {
+      if self.mode == Sm4ModeKind::Cbc {
+        if cp_kind == Sm4CryptoKind::Decrypt {
           for i in 0..BLOCK {
             sms4_blk[i] ^= gogga_iv[i];
           }
@@ -213,10 +231,10 @@ impl Sm4 {
     }
 
     // 解密时去除 padding
-    if matches!(self.padding, PaddingKind::Pkcs5 | PaddingKind::Pkcs7) && cp_kind == CryptoKind::Decrypt {
-      let padl = *reap.last().ok_or(SmCryptoError::PaddingError)? as usize;
+    if matches!(self.padding, Sm4PaddingKind::Pkcs5 | Sm4PaddingKind::Pkcs7) && cp_kind == Sm4CryptoKind::Decrypt {
+      let padl = *reap.last().ok_or(Sm4Error::PaddingError)? as usize;
       if padl == 0 || padl > BLOCK {
-        return Err(SmCryptoError::PaddingError);
+        return Err(Sm4Error::PaddingError);
       }
       reap.truncate(reap.len() - padl);
     }
@@ -225,14 +243,16 @@ impl Sm4 {
   }
 }
 
+
 pub trait ConvertByteArr {
   type OutputType;
 
-  fn convert_to_byte_arrs(&self, edc_kind: EnDecodingKind) -> Result<Vec<u8>, SmCryptoError>;
+  fn convert_to_byte_arrs(&self, edc_kind: EnDecodingKind) -> Result<Vec<u8>, Sm4Error>;
   fn convert_fo_byte_arrs(
     byt_arrs: Vec<u8>, edc_kind: EnDecodingKind,
-  ) -> Result<Self::OutputType, SmCryptoError>;
+  ) -> Result<Self::OutputType, Sm4Error>;
 }
+
 
 pub enum EnDecodingKind {
   Utf8,
@@ -245,19 +265,19 @@ macro_rules! impl_convert_bytearr_about_str {
       impl ConvertByteArr for $t {
         type OutputType = String;
 
-        fn convert_to_byte_arrs(&self, edc_kind: EnDecodingKind) -> Result<Vec<u8>, SmCryptoError> {
+        fn convert_to_byte_arrs(&self, edc_kind: EnDecodingKind) -> Result<Vec<u8>, Sm4Error> {
           match edc_kind {
-            | EnDecodingKind::Utf8 => Ok(utf8_to_array(self)),
-            | EnDecodingKind::Hex => hex_to_array(self)
+            | EnDecodingKind::Utf8 => Ok(utf8_to_arrs(self)),
+            | EnDecodingKind::Hex => hex_to_arrs(self).ok_or(Sm4Error::CodingError)
           }
         }
 
         fn convert_fo_byte_arrs(
           byt_arrs: Vec<u8>, edc_kind: EnDecodingKind,
-        ) -> Result<Self::OutputType, SmCryptoError>{
+        ) -> Result<Self::OutputType, Sm4Error>{
           match edc_kind {
-            | EnDecodingKind::Utf8 => array_to_utf8(&byt_arrs),
-            | EnDecodingKind::Hex => Ok(array_to_hex(&byt_arrs))
+            | EnDecodingKind::Utf8 => arrs_to_utf8(&byt_arrs).ok_or(Sm4Error::CodingError),
+            | EnDecodingKind::Hex => Ok(arrs_to_hex(&byt_arrs))
           }
         }
       }
@@ -271,13 +291,13 @@ macro_rules! impl_convert_bytearr_about_list {
       impl ConvertByteArr for $t {
         type OutputType = Vec<u8>;
 
-        fn convert_to_byte_arrs(&self, _edc_kind: EnDecodingKind) -> Result<Vec<u8>, SmCryptoError> {
+        fn convert_to_byte_arrs(&self, _edc_kind: EnDecodingKind) -> Result<Vec<u8>, Sm4Error> {
           Ok(self.to_vec())
         }
 
         fn convert_fo_byte_arrs(
           byt_arrs: Vec<u8>, _edc_kind: EnDecodingKind
-        ) -> Result<Self::OutputType, SmCryptoError> {
+        ) -> Result<Self::OutputType, Sm4Error> {
           Ok(byt_arrs)
         }
       }
@@ -289,21 +309,22 @@ macro_rules! impl_convert_bytearr_about_list {
 impl_convert_bytearr_about_list!(Vec<u8>, &[u8]);
 impl_convert_bytearr_about_str!(String, &str);
 
-pub trait CryptoTrait {
-  fn encrypt<T: ConvertByteArr>(&self, plain_text: T) -> Result<T::OutputType, SmCryptoError>;
-  fn decrypt<T: ConvertByteArr>(&self, cipher_text: T) -> Result<T::OutputType, SmCryptoError>;
+pub trait Sm4CryptoTrait {
+  fn encrypt<T: ConvertByteArr>(&self, plain_text: T) -> Result<T::OutputType, Sm4Error>;
+  fn decrypt<T: ConvertByteArr>(&self, cipher_text: T) -> Result<T::OutputType, Sm4Error>;
 }
 
-impl CryptoTrait for Sm4 {
-  fn encrypt<T: ConvertByteArr>(&self, plain_text: T) -> Result<T::OutputType, SmCryptoError> {
+
+impl Sm4CryptoTrait for Sm4 {
+  fn encrypt<T: ConvertByteArr>(&self, plain_text: T) -> Result<T::OutputType, Sm4Error> {
     let plain_text_arrs = plain_text.convert_to_byte_arrs(EnDecodingKind::Utf8)?;
-    let reap = self.sm4(plain_text_arrs, CryptoKind::Encrypt)?;
+    let reap = self.sm4(plain_text_arrs, Sm4CryptoKind::Encrypt)?;
     T::convert_fo_byte_arrs(reap, EnDecodingKind::Hex)
   }
 
-  fn decrypt<T: ConvertByteArr>(&self, cipher_text: T) -> Result<T::OutputType, SmCryptoError> {
+  fn decrypt<T: ConvertByteArr>(&self, cipher_text: T) -> Result<T::OutputType, Sm4Error> {
     let cipher_text_arrs = cipher_text.convert_to_byte_arrs(EnDecodingKind::Hex)?;
-    let reap = self.sm4(cipher_text_arrs, CryptoKind::Decrypt)?;
+    let reap = self.sm4(cipher_text_arrs, Sm4CryptoKind::Decrypt)?;
     T::convert_fo_byte_arrs(reap, EnDecodingKind::Utf8)
   }
 }

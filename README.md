@@ -1,6 +1,6 @@
 # SmCrypto
 
-本项目是对[`sm-crypto`](https://github.com/JuneAndGreen/sm-crypto)（`JavaScript`实现）中`SM4`算法的其他语言实现，主要目的是为了同步其加密和解密接口。
+本项目是对[`sm-crypto`](https://github.com/JuneAndGreen/sm-crypto)（`JavaScript`实现）算法的其他语言实现，主要目的是为了同步其加密和解密接口。
 
 计划中的实现语言，以及其目前各自的实现情况如下：
 

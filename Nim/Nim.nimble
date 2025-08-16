@@ -1,7 +1,7 @@
 # Package
 
 version       = "0.1.0"
-author        = "pthumeruihyll"
+author        = "priscira"
 description   = "Nim Implementation of SM-cryption Algorithm"
 license       = "LGPL-2.1-or-later"
 srcDir        = "src"

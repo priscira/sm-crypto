@@ -43,6 +43,7 @@ pub struct ASN1Object {
 
 
 impl ASN1Object {
+  #[allow(dead_code)]
   pub fn new() -> Self {
     Self {
       t: "00".to_string(),

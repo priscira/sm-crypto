@@ -95,34 +95,34 @@ fn test_sm2_sign_verify() {
   println!("public_key = {:?}", public_key);
 
   let sign = sm2_obj.sign(
-    "test message".to_string(), private_key.clone(), false, false,
+    "hello world".to_string(), private_key.clone(), false, false,
     Some(public_key.clone()), None).unwrap();
   let verify = sm2_obj.verify(
-    "test message".to_string(), sign.clone(), public_key.clone(), false, false, None).unwrap();
+    "hello world".to_string(), sign.clone(), public_key.clone(), false, false, None).unwrap();
   println!("sign = {:?}", sign);
   assert!(verify);
 
   let sign = sm2_obj.sign(
-    "test message".to_string(), private_key.clone(), false, true,
+    "hello world".to_string(), private_key.clone(), false, true,
     Some(public_key.clone()), None).unwrap();
   let verify = sm2_obj.verify(
-    "test message".to_string(), sign.clone(), public_key.clone(), false, true, None).unwrap();
+    "hello world".to_string(), sign.clone(), public_key.clone(), false, true, None).unwrap();
   println!("sign = {:?}", sign);
   assert!(verify);
 
   let sign = sm2_obj.sign(
-    "test message".to_string(), private_key.clone(), true, false,
+    "hello world".to_string(), private_key.clone(), true, false,
     Some(public_key.clone()), None).unwrap();
   let verify = sm2_obj.verify(
-    "test message".to_string(), sign.clone(), public_key.clone(), true, false, None).unwrap();
+    "hello world".to_string(), sign.clone(), public_key.clone(), true, false, None).unwrap();
   println!("sign = {:?}", sign);
   assert!(verify);
 
   let sign = sm2_obj.sign(
-    "test message".to_string(), private_key.clone(), true, true,
+    "hello world".to_string(), private_key.clone(), true, true,
     Some(public_key.clone()), None).unwrap();
   let verify = sm2_obj.verify(
-    "test message".to_string(), sign.clone(), public_key.clone(), true, true, None).unwrap();
+    "hello world".to_string(), sign.clone(), public_key.clone(), true, true, None).unwrap();
   println!("sign = {:?}", sign);
   assert!(verify);
 }
@@ -137,40 +137,40 @@ fn test_sm2_sign_verify_with_special_user() {
   println!("private_key = {:?}", private_key);
   println!("public_key = {:?}", public_key);
 
-  let user_id = Some("pthumerian".to_string());
+  let user_id = Some("priscira".to_string());
 
   let sign = sm2_obj.sign(
-    "test message".to_string(), private_key.clone(), false, false,
+    "hello world".to_string(), private_key.clone(), false, false,
     Some(public_key.clone()), user_id.clone()).unwrap();
   let verify = sm2_obj.verify(
-    "test message".to_string(), sign.clone(), public_key.clone(), false, false, user_id.clone())
+    "hello world".to_string(), sign.clone(), public_key.clone(), false, false, user_id.clone())
     .unwrap();
   println!("sign = {:?}", sign);
   assert!(verify);
 
   let sign = sm2_obj.sign(
-    "test message".to_string(), private_key.clone(), false, true,
+    "hello world".to_string(), private_key.clone(), false, true,
     Some(public_key.clone()), user_id.clone()).unwrap();
   let verify = sm2_obj.verify(
-    "test message".to_string(), sign.clone(), public_key.clone(), false, true, user_id.clone())
+    "hello world".to_string(), sign.clone(), public_key.clone(), false, true, user_id.clone())
     .unwrap();
   println!("sign = {:?}", sign);
   assert!(verify);
 
   let sign = sm2_obj.sign(
-    "test message".to_string(), private_key.clone(), true, false,
+    "hello world".to_string(), private_key.clone(), true, false,
     Some(public_key.clone()), user_id.clone()).unwrap();
   let verify = sm2_obj.verify(
-    "test message".to_string(), sign.clone(), public_key.clone(), true, false, user_id.clone())
+    "hello world".to_string(), sign.clone(), public_key.clone(), true, false, user_id.clone())
     .unwrap();
   println!("sign = {:?}", sign);
   assert!(verify);
 
   let sign = sm2_obj.sign(
-    "test message".to_string(), private_key.clone(), true, true,
+    "hello world".to_string(), private_key.clone(), true, true,
     Some(public_key.clone()), user_id.clone()).unwrap();
   let verify = sm2_obj.verify(
-    "test message".to_string(), sign.clone(), public_key.clone(), true, true, user_id.clone())
+    "hello world".to_string(), sign.clone(), public_key.clone(), true, true, user_id.clone())
     .unwrap();
   println!("sign = {:?}", sign);
   assert!(verify);

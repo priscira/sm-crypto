@@ -82,7 +82,7 @@ impl Sm2 {
   #[inline]
   fn crypto_message_digest_xor(messages: &mut Vec<u8>, x2: Vec<u8>, y2: Vec<u8>) {
     let z = [x2, y2].concat();
-    let mut cnt: usize = 1;
+    let mut cnt: u32 = 1;
     let mut gogga_cnt = 0;
     let mut t = sm3_digest(&[z.to_vec(), cnt.to_be_bytes().to_vec()].concat());
     cnt += 1;
@@ -322,8 +322,6 @@ impl Sm2CryptoTrait for Sm2 {
     Self::crypto_message_digest_xor(&mut c2_arrs, x2.clone(), y2.clone());
 
     let check_c3 = arrs_to_hex(&sm3_digest(&[&x2[..], &c2_arrs[..], &y2[..]].concat()));
-    println!("check_c3: {}", check_c3);
-    println!("c3: {}", c3);
     if check_c3.to_lowercase() == c3.to_lowercase() {
       Ok(arrs_to_utf8_latin1(&c2_arrs).ok_or(Sm2Error::CodingError)?)
     } else {

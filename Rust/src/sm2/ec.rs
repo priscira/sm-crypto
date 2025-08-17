@@ -44,8 +44,9 @@ pub struct ECFieldElementFp {
 
 impl ECFieldElementFp {
   /// 构造一个椭圆曲线域元素，不会对`q`是否是素数做检查
-  /// - `q`: `BigUint`，椭圆曲线所基于的素数字段（有限域）的大素数模数
-  /// - `x`: `BigUint`，有限域中的一个元素（模`q`后的整数）
+  /// ## Parameters
+  /// - q: 椭圆曲线所基于的素数字段（有限域）的大素数模数
+  /// - x: 有限域中的一个元素（模`q`后的整数）
   pub fn new(q: BigUint, x: BigUint) -> Self {
     Self {
       x: x % &q,
@@ -355,9 +356,9 @@ impl Eq for ECPointFp {}
 
 
 /// 椭圆曲线$y ^ 2 = x ^ 3 + a * x + b$
-/// - `q`: `BigUint`，椭圆曲线所基于的素数字段（有限域）的大素数模数
-/// - `a`: `BigUint`，椭圆曲线方程的`a`项
-/// - `b`: `BigUint`，椭圆曲线方程的`b`项
+/// - q: 椭圆曲线所基于的素数字段（有限域）的大素数模数
+/// - a: 椭圆曲线方程的`a`项
+/// - b: 椭圆曲线方程的`b`项
 #[derive(Debug)]
 pub struct ECCurveFp {
   pub q: BigUint,
@@ -368,9 +369,10 @@ pub struct ECCurveFp {
 
 impl ECCurveFp {
   /// 构造一个椭圆曲线
-  /// - `q`: `BigUint`，椭圆曲线所基于的素数字段（有限域）的大素数模数
-  /// - `a`: `BigUint`，椭圆曲线方程的`a`项
-  /// - `b`: `BigUint`，椭圆曲线方程的`b`项
+  /// ## Parameters
+  /// - q: 椭圆曲线所基于的素数字段（有限域）的大素数模数
+  /// - a: 椭圆曲线方程的`a`项
+  /// - b: 椭圆曲线方程的`b`项
   pub fn new(q: BigUint, a: BigUint, b: BigUint) -> Rc<Self> {
     Rc::new(Self {
       q: q.clone(),
@@ -385,13 +387,15 @@ impl ECCurveFp {
   }
 
   /// 生成椭圆曲线域元素
-  /// - `x`: `BigUint`，有限域中的一个元素（模`q`后的整数）
+  /// ## Parameters
+  /// - x: 有限域中的一个元素（模`q`后的整数）
   pub fn furnish_ec_field_from_biguint(&self, x: BigUint) -> ECFieldElementFp {
     ECFieldElementFp::new(self.q.clone(), x)
   }
 
   /// 解析十六进制串为椭圆曲线点
-  /// - `hex_talks`: `str`，十六进制串，且长度为奇数
+  /// ## Parameters
+  /// - hex_talks: 十六进制串，且长度为奇数
   pub fn decode_point_hex(self: &Rc<Self>, hex_talks: &str) -> Option<ECPointFp> {
     let hex_byte1 = u8::from_str_radix(&hex_talks[..2], 16).ok()?;
 

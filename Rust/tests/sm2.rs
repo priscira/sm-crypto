@@ -33,7 +33,6 @@ fn test_generate_key_pair_hex() {
   println!("compressed_public_key = {:?}", compress_public_key);
   let verfy_public_key = sm2_obj.verify_public_key(&public_key).unwrap();
   println!("verify_public_key = {:?}", verfy_public_key);
-  println!("===================================");
 }
 
 
@@ -46,12 +45,12 @@ fn test_sm2_c1c2c3_crypto() {
   println!("private_key = {:?}", private_key);
   println!("public_key = {:?}", public_key);
 
-  let cn_talks = "臂上妆犹在，襟间泪尚盈。".to_string();
+  let cn_talks = "臂上妆犹在，襟间泪尚盈。";
   let en_talks = "When I was young I'd listen to the radio, waiting for my favorite songs.".to_string();
 
-  let cn_enc_talks = sm2_obj.encrypt(cn_talks.clone(), public_key.clone(), Sm2ModeKind::C1C2C3).unwrap();
+  let cn_enc_talks = sm2_obj.encrypt(cn_talks, &public_key, Sm2ModeKind::C1C2C3).unwrap();
   println!("c1c2c3_cn_enc = {:?}", cn_enc_talks);
-  let cn_dec_talks = sm2_obj.decrypt(cn_enc_talks, private_key.clone(), Sm2ModeKind::C1C2C3).unwrap();
+  let cn_dec_talks = sm2_obj.decrypt(&cn_enc_talks, &private_key, Sm2ModeKind::C1C2C3).unwrap();
   assert_eq!(cn_talks, cn_dec_talks);
 
   let en_enc_talks = sm2_obj.encrypt(en_talks.clone(), public_key.clone(), Sm2ModeKind::C1C2C3).unwrap();
@@ -71,16 +70,16 @@ fn test_sm2_c1c3c2_crypto() {
   println!("public_key = {:?}", public_key);
 
   let cn_talks = "臂上妆犹在，襟间泪尚盈。".to_string();
-  let en_talks = "When I was young I'd listen to the radio, waiting for my favorite songs.".to_string();
+  let en_talks = "When I was young I'd listen to the radio, waiting for my favorite songs.";
 
   let cn_enc_talks = sm2_obj.encrypt(cn_talks.clone(), public_key.clone(), Sm2ModeKind::C1C3C2).unwrap();
   println!("c1c3c2_cn_enc = {:?}", cn_enc_talks);
   let cn_dec_talks = sm2_obj.decrypt(cn_enc_talks, private_key.clone(), Sm2ModeKind::C1C3C2).unwrap();
   assert_eq!(cn_talks, cn_dec_talks);
 
-  let en_enc_talks = sm2_obj.encrypt(en_talks.clone(), public_key.clone(), Sm2ModeKind::C1C3C2).unwrap();
+  let en_enc_talks = sm2_obj.encrypt(en_talks, &public_key, Sm2ModeKind::C1C3C2).unwrap();
   println!("c1c3c2_en_enc = {:?}", en_enc_talks);
-  let en_dec_talks = sm2_obj.decrypt(en_enc_talks, private_key.clone(), Sm2ModeKind::C1C3C2).unwrap();
+  let en_dec_talks = sm2_obj.decrypt(&en_enc_talks, &private_key, Sm2ModeKind::C1C3C2).unwrap();
   assert_eq!(en_talks, en_dec_talks);
 }
 
@@ -103,10 +102,10 @@ fn test_sm2_sign_verify() {
   assert!(verify);
 
   let sign = sm2_obj.sign(
-    "hello world".to_string(), private_key.clone(), false, true,
+    "hello world", &private_key, false, true,
     Some(public_key.clone()), None).unwrap();
   let verify = sm2_obj.verify(
-    "hello world".to_string(), sign.clone(), public_key.clone(), false, true, None).unwrap();
+    "hello world", &sign, &public_key, false, true, None).unwrap();
   println!("sign = {:?}", sign);
   assert!(verify);
 
@@ -158,19 +157,19 @@ fn test_sm2_sign_verify_with_special_user() {
   assert!(verify);
 
   let sign = sm2_obj.sign(
-    "hello world".to_string(), private_key.clone(), true, false,
+    "hello world", &private_key, true, false,
     Some(public_key.clone()), user_id.clone()).unwrap();
   let verify = sm2_obj.verify(
-    "hello world".to_string(), sign.clone(), public_key.clone(), true, false, user_id.clone())
+    "hello world", &sign, &public_key, true, false, user_id.clone())
     .unwrap();
   println!("sign = {:?}", sign);
   assert!(verify);
 
   let sign = sm2_obj.sign(
-    "hello world".to_string(), private_key.clone(), true, true,
+    "hello world", &private_key, true, true,
     Some(public_key.clone()), user_id.clone()).unwrap();
   let verify = sm2_obj.verify(
-    "hello world".to_string(), sign.clone(), public_key.clone(), true, true, user_id.clone())
+    "hello world", &sign, &public_key, true, true, user_id.clone())
     .unwrap();
   println!("sign = {:?}", sign);
   assert!(verify);

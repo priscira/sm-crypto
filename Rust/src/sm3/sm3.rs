@@ -4,8 +4,11 @@ use crate::sm4::util::*;
 
 #[derive(Debug, PartialEq, Eq)]
 pub enum Sm3Error {
+  // 编码错误
   CodingError,
+  // 无效的密钥
   InvalidKey,
+  // 不支持的SM3模式
   UnsupportedMode,
 }
 
@@ -24,6 +27,13 @@ impl Sm3 {
     Self
   }
 
+  /// SM3杂凑
+  /// ## Parameters
+  /// - plain_text: 明文，支持字符串类型
+  /// - sm3_key: 密钥，若杂凑模式为HMAC则必须提供
+  /// - sm3_mode_kind: 模式，目前仅支持HMAC
+  /// ## Returns
+  /// - SM3杂凑值，失败则返回Sm3Error
   pub fn hash<S>(
     &self, plain_text: S, sm3_key: Option<S>, sm3_mode_kind: Option<Sm3ModeKind>,
   ) -> Result<String, Sm3Error>

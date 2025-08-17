@@ -1,6 +1,7 @@
 /// 十六进制字符串左侧零填充
-/// - `hex_talks`: `&str`，十六进制字符串
-/// - `wid`: `usize`，总宽度
+/// ## Parameters
+/// - hex_talks: 十六进制字符串
+/// - wid: 总宽度
 pub fn hex_left_zero_pad(hex_talks: &str, wid: usize) -> String {
   if hex_talks.len() >= wid {
     hex_talks.to_string()
@@ -11,14 +12,16 @@ pub fn hex_left_zero_pad(hex_talks: &str, wid: usize) -> String {
 
 
 /// utf8字符串转十六进制字符串
-/// - `utf8_talks`: `&str`，utf8字符串
+/// ## Parameters
+/// - utf8_talks: utf8字符串
 pub fn utf8_to_hex(utf8_talks: &str) -> String {
   hex::encode(utf8_talks.as_bytes())
 }
 
 
 /// 字节数组转utf8字符串
-/// - `arrs`: `&[u8]`，字节数组
+/// ## Parameters
+/// - arrs: 字节数组
 pub fn arrs_to_utf8_latin1(arrs: &[u8]) -> Option<String> {
   let mut word_arrs = vec![0u32; (arrs.len() + 3) / 4];
   let mut j = 0;
@@ -40,15 +43,18 @@ pub fn arrs_to_utf8_latin1(arrs: &[u8]) -> Option<String> {
 
 
 /// 字节数组转十六进制字符串
-/// - `byt_arrs`: `&[u8]`，字节数组
+/// ## Parameters
+/// - byt_arrs: 字节数组
 pub fn arrs_to_hex(byt_arrs: &[u8]) -> String {
   hex::encode(byt_arrs)
 }
 
 
 /// 解读十六进制字符串为数组
-/// - `hex_talks`: `&str`，十六进制字符串
-/// 返回十六进制字符串对应的数组，例如：`hex_anly_arrs("4f20") == [79, 32]`
+/// ## Parameters
+/// - hex_talks: 十六进制字符串
+/// ## Returns
+/// 十六进制字符串对应的数组，例如：`hex_anly_arrs("4f20") == [79, 32]`
 pub fn hex_anly_arrs(hex_talks: &str) -> Vec<u8> {
   if hex_talks.len() % 2 != 0 {
     hex_left_zero_pad(hex_talks, hex_talks.len() + 1)

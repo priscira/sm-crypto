@@ -10,12 +10,19 @@ use crate::sm3::achieve::*;
 
 #[derive(Debug, PartialEq, Eq)]
 pub enum Sm2Error {
+  // 编码错误
   CodingError,
+  // 无效的公钥
   InvalidPublicKey,
+  // 无效的私钥
   InvalidPrivateKey,
+  // 无效的数据
   InvalidData,
+  // 加密异常
   EncryptionError,
+  // 解密异常
   DecryptionError,
+  // 椭圆曲线错误
   EllipticCurveError,
   Other(String),
 }
@@ -42,9 +49,9 @@ struct Sm2RandomPoint {
 
 
 /// Sm2椭圆曲线参数
-/// - `ec_curve`: `Rc<ECCurveFp>`，椭圆曲线
-/// - `ec_gpoint`: `ECPointFp`，椭圆曲线基点
-/// - `ec_n`: `BigUint`，椭圆曲线基点阶
+/// - ec_curve: 椭圆曲线
+/// - ec_gpoint: 椭圆曲线基点
+/// - ec_n: 椭圆曲线基点阶
 pub struct Sm2 {
   pub ec_curve: Rc<ECCurveFp>,
   pub ec_gpoint: ECPointFp,
@@ -99,7 +106,8 @@ impl Sm2 {
   }
 
   /// 生成十六进制字符串格式的私钥和公钥
-  /// - `seed`: `Option<(String, u32)>`，可选的种子，用于生成密钥对，格式为`(种子字符串, 进制)`
+  /// ## Parameters
+  /// - seed: 可选的种子，用于生成密钥对，格式为`(种子字符串, 进制)`
   pub fn generate_key_pair_hex(&self, seed: Option<(String, u32)>) -> Result<Sm2KeyPair, Sm2Error> {
     let ec_n_m1 = &self.ec_n - 1u8;
     let salty_seed = match seed {
@@ -129,6 +137,11 @@ impl Sm2 {
     })
   }
 
+  /// 压缩公钥
+  /// ## Parameters
+  /// - public_key: 130字符的十六进制格式的完整公钥
+  /// ## Returns
+  /// 66字符的压缩后的公钥
   pub fn compress_public_key_hex(public_key: &str) -> Result<String, Sm2Error> {
     if public_key.len() != 130 {
       return Err(Sm2Error::InvalidPublicKey);
@@ -145,7 +158,8 @@ impl Sm2 {
   }
 
   /// 验证公钥是否为椭圆曲线上的点
-  /// - `public_key`: `str`，十六进制格式的公钥
+  /// ## Parameters
+  /// - public_key: 公钥
   pub fn verify_public_key(&self, public_key: &str) -> Result<bool, Sm2Error> {
     let ec_curve = &self.ec_curve;
     let mut pub_k_ec_point = ec_curve.decode_point_hex(public_key).unwrap();
@@ -167,7 +181,7 @@ impl Sm2 {
 
 
   /// sm3杂凑算法
-  pub fn get_hash(
+  fn sm3_hash_4sm2(
     &mut self, hash_hex: &str, public_key: &str, user_id: Option<String>,
   ) -> Result<String, Sm2Error> {
     let uid = utf8_to_hex(&user_id.unwrap_or("1234567812345678".to_string()));
@@ -216,7 +230,9 @@ impl Sm2 {
 
 
   /// 私钥导出公钥
-  pub fn get_public_key_from_private_key(&mut self, private_key: &str) -> Result<String, Sm2Error> {
+  /// ## Parameters
+  /// - private_key: 私钥
+  pub fn furnish_public_key_from_private_key(&mut self, private_key: &str) -> Result<String, Sm2Error> {
     let ec_gpoint = &mut self.ec_gpoint;
     let mut prv_k_gpoint = ec_gpoint.mul(
       &BigUint::from_str_radix(private_key, 16).map_err(|_| Sm2Error::InvalidPrivateKey)?
@@ -247,21 +263,32 @@ impl Sm2 {
 
 
 pub trait Sm2CryptoTrait {
-  fn encrypt(
-    &self, plain_text: String, public_key: String, sm2_mode_kind: Sm2ModeKind,
-  ) -> Result<String, Sm2Error>;
-  fn decrypt(
-    &self, cipher_text: String, private_key: String, sm2_mode_kind: Sm2ModeKind,
-  ) -> Result<String, Sm2Error>;
+  fn encrypt<S>(
+    &self, plain_text: S, public_key: S, sm2_mode_kind: Sm2ModeKind,
+  ) -> Result<String, Sm2Error> where
+    S: AsRef<str>;
+  fn decrypt<S>(
+    &self, cipher_text: S, private_key: S, sm2_mode_kind: Sm2ModeKind,
+  ) -> Result<String, Sm2Error> where
+    S: AsRef<str>;
 }
 
 
 impl Sm2CryptoTrait for Sm2 {
-  fn encrypt(
-    &self, plain_text: String, public_key: String, sm2_mode_kind: Sm2ModeKind,
-  ) -> Result<String, Sm2Error> {
-    let mut plain_text_arrs = hex_anly_arrs(&utf8_to_hex(&plain_text));
-    let pub_k_ec_point = self.ec_curve.decode_point_hex(&public_key)
+  /// SM2加密
+  /// ## Parameters
+  /// - plain_text: 明文，支持字符串类型
+  /// - public_key: 公钥，支持字符串类型
+  /// - sm2_mode_kind: 加密模式
+  /// ## Returns
+  /// SM2加密密文结果，失败则返回Sm2Error
+  fn encrypt<S>(
+    &self, plain_text: S, public_key: S, sm2_mode_kind: Sm2ModeKind,
+  ) -> Result<String, Sm2Error> where
+    S: AsRef<str>,
+  {
+    let mut plain_text_arrs = hex_anly_arrs(&utf8_to_hex(plain_text.as_ref()));
+    let pub_k_ec_point = self.ec_curve.decode_point_hex(public_key.as_ref())
       .ok_or(Sm2Error::InvalidPublicKey)?;
 
     let key_pairs = self.generate_key_pair_hex(None)?;
@@ -294,10 +321,20 @@ impl Sm2CryptoTrait for Sm2 {
     }
   }
 
-  fn decrypt(
-    &self, cipher_text: String, private_key: String, sm2_mode_kind: Sm2ModeKind,
-  ) -> Result<String, Sm2Error> {
-    let private_key = BigUint::from_str_radix(&private_key, 16).unwrap();
+  /// SM2解密
+  /// ## Parameters
+  /// - cipher_text: 密文，支持字符串类型
+  /// - private_key: 私钥，支持字符串类型
+  /// - sm2_mode_kind: 解密模式
+  /// ## Returns
+  /// SM2解密明文结果，失败则返回Sm2Error
+  fn decrypt<S>(
+    &self, cipher_text: S, private_key: S, sm2_mode_kind: Sm2ModeKind,
+  ) -> Result<String, Sm2Error> where
+    S: AsRef<str>,
+  {
+    let cipher_text = cipher_text.as_ref();
+    let private_key = BigUint::from_str_radix(private_key.as_ref(), 16).unwrap();
 
     let (c2, c3) = if sm2_mode_kind == Sm2ModeKind::C1C2C3 {
       (&cipher_text[128..cipher_text.len() - 64], &cipher_text[cipher_text.len() - 64..])
@@ -332,31 +369,45 @@ impl Sm2CryptoTrait for Sm2 {
 
 
 pub trait Sm2SignTrait {
-  fn sign(
-    &mut self, plain_text: String, private_key: String, need_der: bool, need_hash: bool,
+  fn sign<S>(
+    &mut self, plain_text: S, private_key: S, need_der: bool, need_hash: bool,
     public_key: Option<String>, user_id: Option<String>,
-  ) -> Result<String, Sm2Error>;
-  fn verify(
-    &mut self, plain_text: String, sign_text: String, public_key: String, need_der: bool, need_hash: bool,
+  ) -> Result<String, Sm2Error> where
+    S: AsRef<str>;
+  fn verify<S>(
+    &mut self, plain_text: S, sign_text: S, public_key: S, need_der: bool, need_hash: bool,
     user_id: Option<String>,
-  ) -> Result<bool, Sm2Error>;
+  ) -> Result<bool, Sm2Error> where
+    S: AsRef<str>;
 }
 
 
 impl Sm2SignTrait for Sm2 {
-  fn sign(
-    &mut self, plain_text: String, private_key: String, need_der: bool, need_hash: bool,
+  /// SM2签名
+  /// ## Parameters
+  /// - plain_text: 明文，支持字符串类型
+  /// - private_key: 私钥，支持字符串类型
+  /// - need_der: 是否返回DER格式的签名
+  /// - need_hash: 是否对明文进行杂凑
+  /// - public_key: 额外的公钥，在需要对明文进行杂凑时使用
+  /// - user_id: 额外的用户ID
+  /// ## Returns
+  /// SM2签名结果，程序错误则返回Sm2Error
+  fn sign<S>(
+    &mut self, plain_text: S, private_key: S, need_der: bool, need_hash: bool,
     public_key: Option<String>, user_id: Option<String>,
-  ) -> Result<String, Sm2Error> {
-    let mut plain_text = utf8_to_hex(&plain_text);
+  ) -> Result<String, Sm2Error> where
+    S: AsRef<str>,
+  {
+    let mut plain_text = utf8_to_hex(plain_text.as_ref());
 
     if need_hash {
       let public_key = public_key.unwrap_or(
-        self.get_public_key_from_private_key(&private_key)?);
-      plain_text = self.get_hash(&plain_text, &public_key, user_id)?;
+        self.furnish_public_key_from_private_key(private_key.as_ref())?);
+      plain_text = self.sm3_hash_4sm2(&plain_text, &public_key, user_id)?;
     }
 
-    let d_a_u = BigUint::from_str_radix(&private_key, 16)
+    let d_a_u = BigUint::from_str_radix(private_key.as_ref(), 16)
       .map_err(|_| Sm2Error::InvalidPrivateKey)?;
     let e_u = BigUint::from_str_radix(&plain_text, 16)
       .map_err(|_| Sm2Error::InvalidData)?;
@@ -401,18 +452,32 @@ impl Sm2SignTrait for Sm2 {
     })
   }
 
-  fn verify(
-    &mut self, plain_text: String, sign_text: String, public_key: String, need_der: bool, need_hash: bool,
+  /// SM2验签
+  /// ## Parameters
+  /// - plain_text: 明文，支持字符串类型
+  /// - sign_text: 签名，支持字符串类型
+  /// - public_key: 公钥，支持字符串类型
+  /// - need_der: 是否使用DER格式的签名
+  /// - need_hash: 是否对明文进行杂凑
+  /// - user_id: 额外的用户ID
+  /// ## Returns
+  /// SM2验签结果，程序错误则返回Sm2Error
+  fn verify<S>(
+    &mut self, plain_text: S, sign_text: S, public_key: S, need_der: bool, need_hash: bool,
     user_id: Option<String>,
-  ) -> Result<bool, Sm2Error> {
-    let mut plain_text = utf8_to_hex(&plain_text);
+  ) -> Result<bool, Sm2Error> where
+    S: AsRef<str>,
+  {
+    let public_key = public_key.as_ref();
+    let sign_text = sign_text.as_ref();
+    let mut plain_text = utf8_to_hex(plain_text.as_ref());
 
     if need_hash {
-      plain_text = self.get_hash(&plain_text, &public_key, user_id)?;
+      plain_text = self.sm3_hash_4sm2(&plain_text, public_key, user_id)?;
     }
 
     let (r, s) = if need_der {
-      let (r_int, s_int) = decode_der(&sign_text);
+      let (r_int, s_int) = decode_der(sign_text);
 
       // 负数判断，不合法直接返回 false
       let r = match r_int.to_biguint() {
@@ -431,7 +496,7 @@ impl Sm2SignTrait for Sm2 {
       )
     };
 
-    let p_a = self.ec_curve.decode_point_hex(&public_key);
+    let p_a = self.ec_curve.decode_point_hex(public_key);
     let e = BigUint::from_str_radix(&plain_text, 16).map_err(|_| Sm2Error::InvalidData)?;
     let t = (&r + &s) % &self.ec_n;
 
@@ -449,8 +514,8 @@ impl Sm2SignTrait for Sm2 {
 
 
 /// 计算大整数的模运算（向下取整），确保结果始终为非负数。
-/// - `dial`: `&BigInt`，被除数
-/// - `n`: `&BigInt`，除数（必须为正数）
+/// - dial: 被除数
+/// - n: 除数（必须为正数）
 fn big_int_mod_floor(dial: &BigInt, n: &BigInt) -> BigInt {
   let reap = dial % n;
   if reap.sign() == Sign::Minus {

@@ -17,7 +17,8 @@ fn p1(dial: u32) -> u32 {
 
 
 /// SM3填充压缩数据为64字节整数倍[元数据，0x80，零填充，原始长度填充]
-/// - `byt_arrs`: `&[u8]`，待填充的字节数组
+/// ## Parameters
+/// - byt_arrs: 待填充的字节数组
 fn sm3_pad(byt_arrs: &[u8]) -> Vec<u8> {
   // m = [...array, 0x80, ...kArr, ...lenArr]
   // ...array
@@ -59,8 +60,9 @@ fn sm3_pad(byt_arrs: &[u8]) -> Vec<u8> {
 
 
 /// 模拟dataview.getUint32()，整合4个字节为一个u32
-/// - `byt4`: `&[u8]`，4个字节的字节数组
-/// - `is_be`: `bool`，是否以大端字节序读取
+/// ## Parameters
+/// - byt4: 4个字节的字节数组
+/// - is_be: 是否以大端字节序读取
 fn data_view_get_uint_32(byt4: &[u8], is_be: bool) -> u32 {
   if is_be {
     u32::from_be_bytes([byt4[0], byt4[1], byt4[2], byt4[3]])
@@ -71,7 +73,8 @@ fn data_view_get_uint_32(byt4: &[u8], is_be: bool) -> u32 {
 
 
 /// SM3压缩函数
-/// - `byt_arrs`: `&[u8]`，待压缩的字节数组
+/// ## Parameters
+/// - byt_arrs: 待压缩的字节数组
 pub fn sm3_digest(byt_arrs: &[u8]) -> Vec<u8> {
   let mut sm3_v: [u32; 8] = [
     0x7380166f, 0x4914b2b9, 0x172442d7, 0xda8a0600, 0xa96f30bc, 0x163138aa, 0xe38dee4d, 0xb0fb0e4e
@@ -153,8 +156,9 @@ pub fn sm3_digest(byt_arrs: &[u8]) -> Vec<u8> {
 
 
 /// HMAC-SM3认证算法
-/// - `sm3_k`: `&[u8]`，HMAC密钥
-/// - `val`: `&[u8]`，待签名消息
+/// ## Parameters
+/// - sm3_k: HMAC密钥
+/// - val: 待签名消息
 pub fn sm3_hmac(sm3_k: &[u8], val: &[u8]) -> Vec<u8> {
   const BLOCK: usize = 64;
 

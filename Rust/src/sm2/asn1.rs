@@ -221,8 +221,9 @@ fn gain_start_pos_of_v(talks: &str, start: usize) -> usize {
 
 
 /// 编码DER
-/// - `r`: `&BigInt`，sm2签名的`r`
-/// - `s`: `&BigInt`，sm2签名的`s`
+/// ## Parameters
+/// - r: sm2签名的`r`
+/// - s: sm2签名的`s`
 pub fn encode_der(r: &BigInt, s: &BigInt) -> String {
   let der_r = DERInteger::new(r);
   let der_s = DERInteger::new(s);
@@ -237,8 +238,10 @@ pub fn encode_der(r: &BigInt, s: &BigInt) -> String {
 
 
 /// 解码DER
-/// - `sg_talks`: `&str`，sm2签名的DER编码字符串
-/// 返回sm2签名的`r`和`s`
+/// ## Parameters
+/// - sg_talks: sm2签名的DER编码字符串
+/// ## Returns
+/// sm2签名的`r`和`s`
 pub fn decode_der(sg_talks: &str) -> (BigInt, BigInt) {
   // 结构：input = | tSeq | lSeq | vSeq |
   // vSeq = | tR | lR | vR | tS | lS | vS |

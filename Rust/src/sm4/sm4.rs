@@ -3,18 +3,24 @@ use crate::sm4::util::*;
 
 #[derive(Debug, PartialEq, Eq)]
 pub enum Sm4Error {
+  // 编码错误
   CodingError,
+  // 无效的密钥
   InvalidKey,
+  // 无效的数据
   InvalidData,
+  // 填充错误
   PaddingError,
+  // 加密失败
   EncryptionError,
+  // 解密失败
   DecryptionError,
   Other(String),
 }
 
 
 #[derive(Debug, Clone, PartialEq, Eq)]
-pub enum Sm4CryptoKind {
+enum Sm4CryptoKind {
   Encrypt,
   Decrypt,
 }
@@ -107,7 +113,6 @@ fn to_words(blks: &[u8]) -> Result<[u32; 4], Sm4Error> {
 /// 对16字节明/密文块执行一次SMS4轮变换
 /// ## Parameters
 /// - blk: 16字节明文或密文块
-/// - rk: list[int]
 /// ## Returns
 /// SMS4轮变换结果
 fn sms4_crypt(blk: &[u8], rk: &[u32]) -> Result<[u8; BLOCK], Sm4Error> {
@@ -157,6 +162,9 @@ fn sms4_key_ext(mk: &[u8], crypt_kind: &Sm4CryptoKind) -> Result<Vec<u32>, Sm4Er
 }
 
 
+/// SM4对称加密算法
+/// ## Fields
+/// - sm4_key: 128比特的SM4主密钥
 #[derive(Debug)]
 pub struct Sm4 {
   pub sm4_key: Vec<u8>,
@@ -167,6 +175,12 @@ pub struct Sm4 {
 
 
 impl Sm4 {
+  /// 创建SM4加解密实例
+  /// ## Parameters
+  /// - sm4_key: 128比特的SM4主密钥，支持Vec<u8>, &[u8], String, &str
+  /// - padding: 明文填充方式
+  /// - mode: 加密模式
+  /// - iv: 初始向量，CBC模式时必填
   pub fn new<T: ConvertByteArr>(
     sm4_key: T, padding: Sm4PaddingKind, mode: Sm4ModeKind, iv: Option<T>,
   ) -> Result<Self, Sm4Error> {
@@ -199,6 +213,12 @@ impl Sm4 {
     })
   }
 
+  /// SM4加解密核心逻辑
+  /// ## Parameters
+  /// - arrs: 待加密/解密的字节数组
+  /// - cp_kind: 加密还是解密
+  /// ## Returns
+  /// 加密/解密结果字节数组；出错时返回Sm4Error
   fn sm4(&self, mut arrs: Vec<u8>, cp_kind: Sm4CryptoKind) -> Result<Vec<u8>, Sm4Error> {
     let rk = sms4_key_ext(&self.sm4_key, &cp_kind)?;
     let mut gogga_iv = self.iv.clone().unwrap_or_default();
@@ -244,6 +264,7 @@ impl Sm4 {
 }
 
 
+/// 将输入内容转化为SM4字节数组
 pub trait ConvertByteArr {
   type OutputType;
 
@@ -259,6 +280,8 @@ pub enum EnDecodingKind {
   Hex,
 }
 
+
+/// 对String和&str实现ConvertByteArr
 macro_rules! impl_convert_bytearr_about_str {
   ($($t:ty),*) => {
     $(
@@ -285,6 +308,8 @@ macro_rules! impl_convert_bytearr_about_str {
   };
 }
 
+
+/// 对Vec<u8>和 &[u8]实现ConvertByteArr
 macro_rules! impl_convert_bytearr_about_list {
   ($($t:ty),*) => {
     $(
@@ -305,7 +330,6 @@ macro_rules! impl_convert_bytearr_about_list {
   };
 }
 
-// 为 Vec<u8> 和 &[u8] 实现
 impl_convert_bytearr_about_list!(Vec<u8>, &[u8]);
 impl_convert_bytearr_about_str!(String, &str);
 
@@ -316,12 +340,22 @@ pub trait Sm4CryptoTrait {
 
 
 impl Sm4CryptoTrait for Sm4 {
+  /// SM4加密
+  /// ## Parameters
+  /// - plain_text: 待加密的明文，支持Vec<u8>, &[u8], String, &str
+  /// ## Returns
+  /// 加密结果（字节数组或字符串）；出错时返回Sm4Error
   fn encrypt<T: ConvertByteArr>(&self, plain_text: T) -> Result<T::OutputType, Sm4Error> {
     let plain_text_arrs = plain_text.convert_to_byte_arrs(EnDecodingKind::Utf8)?;
     let reap = self.sm4(plain_text_arrs, Sm4CryptoKind::Encrypt)?;
     T::convert_fo_byte_arrs(reap, EnDecodingKind::Hex)
   }
 
+  /// SM4解密
+  /// ## Parameters
+  /// - cipher_text: 待解密的密文，支持Vec<u8>, &[u8], String, &str
+  /// ## Returns
+  /// 解密结果（字节数组或字符串）；出错时返回Sm4Error
   fn decrypt<T: ConvertByteArr>(&self, cipher_text: T) -> Result<T::OutputType, Sm4Error> {
     let cipher_text_arrs = cipher_text.convert_to_byte_arrs(EnDecodingKind::Hex)?;
     let reap = self.sm4(cipher_text_arrs, Sm4CryptoKind::Decrypt)?;

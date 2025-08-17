@@ -37,7 +37,7 @@ CK = [
 
 
 def _hex_to_array(hex_talks):
-  '''
+  """
   十六进制字符串转成数组
 
   Parameters
@@ -49,12 +49,12 @@ def _hex_to_array(hex_talks):
   -------
   list[int]
     十六进制字符串各字节对应的整数组成的数组
-  '''
+  """
   return list(bytes.fromhex(hex_talks))
 
 
 def _array_to_hex(hex_arrs):
-  '''
+  """
   字节数组转十六进制字符串
 
   Parameters
@@ -66,12 +66,12 @@ def _array_to_hex(hex_arrs):
   -------
   str
     十六进制字符串
-  '''
+  """
   return bytes(hex_arrs).hex()
 
 
 def _utf8_to_array(talks):
-  '''
+  """
   utf-8字符串转成数组
 
   Parameters
@@ -83,12 +83,12 @@ def _utf8_to_array(talks):
   -------
   list[int]
     utf-8字符串各字节对应的整数组成的数组
-  '''
+  """
   return list(talks.encode('utf-8'))
 
 
 def _array_to_utf8(arrs):
-  '''
+  """
   字节数组转utf-8字符串
 
   Parameters
@@ -100,12 +100,12 @@ def _array_to_utf8(arrs):
   -------
   str
     utf-8字符串
-  '''
+  """
   return bytes(arrs).decode('utf-8', errors='strict')
 
 
 def _rotl(value, left_move_nums):
-  '''
+  """
   32位循环左移
 
   Parameters
@@ -119,7 +119,7 @@ def _rotl(value, left_move_nums):
   -------
   int
     循环左移结果
-  '''
+  """
   left_move_nums &= 31
   return (
     (value << left_move_nums) | (value >> (32 - left_move_nums))
@@ -127,7 +127,7 @@ def _rotl(value, left_move_nums):
 
 
 def _byte_sub(number):
-  '''
+  """
   非线性变换，逐字节查s盒
 
   Parameters
@@ -138,7 +138,7 @@ def _byte_sub(number):
   -------
   int
     s盒变换结果
-  '''
+  """
   return (
     (SBOX[(number >> 24) & 0xFF] << 24) | (SBOX[(number >> 16) & 0xFF] << 16) |
     (SBOX[(number >> 8) & 0xFF] << 8) | SBOX[number & 0xFF]
@@ -146,7 +146,7 @@ def _byte_sub(number):
 
 
 def _l1(number):
-  '''
+  """
   线性变换l，用于给轮函数加密/解密
 
   Parameters
@@ -156,16 +156,18 @@ def _l1(number):
   Returns
   -------
   int
-  '''
+  """
   return (
     number ^
-    _rotl(number, 2) ^ _rotl(number, 10) ^ _rotl(number, 18) ^ _rotl(number,
-    24)
+    _rotl(number, 2) ^ _rotl(number, 10) ^ _rotl(number, 18) ^ _rotl(
+    number,
+    24
+    )
   )
 
 
 def _l2(number):
-  '''
+  """
   线性变换l'，扩展密钥
 
   Parameters
@@ -175,12 +177,12 @@ def _l2(number):
   Returns
   -------
   int
-  '''
+  """
   return number ^ _rotl(number, 13) ^ _rotl(number, 23)
 
 
 def _sms4_crypt(block, round_keys):
-  '''
+  """
   对16字节明/密文块执行一次SMS4轮变换
 
   Parameters
@@ -194,7 +196,7 @@ def _sms4_crypt(block, round_keys):
   -------
   list[int]
     SMS4轮变换结果
-  '''
+  """
   # 每32bit处理为一个字
   words = [(
              (block[4 * i] << 24) | (block[4 * i + 1] << 16) |
@@ -209,17 +211,19 @@ def _sms4_crypt(block, round_keys):
   # 反序并拆回字节
   results = []
   for wordi in reversed(words):
-    results.extend([
-      (wordi >> 24) & 0xFF,
-      (wordi >> 16) & 0xFF,
-      (wordi >> 8) & 0xFF,
-      wordi & 0xFF
-      ])
+    results.extend(
+      [
+        (wordi >> 24) & 0xFF,
+        (wordi >> 16) & 0xFF,
+        (wordi >> 8) & 0xFF,
+        wordi & 0xFF
+        ]
+      )
   return results
 
 
 def _sms4_key_ext(master_key, crypt_flag):
-  '''
+  """
   密钥扩展，将128比特的密钥变成32个32比特的轮密钥
 
   Parameters
@@ -233,7 +237,7 @@ def _sms4_key_ext(master_key, crypt_flag):
   -------
   list[int]
     32个32比特的轮密钥
-  '''
+  """
   # 每32bit处理为一个字
   words = [(
              (master_key[4 * i] << 24) | (master_key[4 * i + 1] << 16) |
@@ -262,7 +266,7 @@ def _sm4(
   texts, sm4_key, crypt_flag, padding='pkcs7', mode='ecb', iv=None,
   out_type='string'
   ):
-  '''
+  """
   SM4加/解密主要逻辑
 
   Parameters
@@ -286,7 +290,7 @@ def _sm4(
   -------
   str | list[int]
     根据out_type输出的结果
-  '''
+  """
   if not iv:
     iv = []
 
@@ -370,7 +374,7 @@ def _sm4(
 def encrypt(
   text, sm4_key, padding='pkcs7', mode='ecb', iv=None, out_type='string'
   ):
-  '''
+  """
   SM4加密
 
   Parameters
@@ -392,7 +396,7 @@ def encrypt(
   -------
   str | list[int]
     根据out_type输出的结果
-  '''
+  """
   return _sm4(
     text, sm4_key, _ENCRYPT,
     padding=padding, mode=mode, iv=iv, out_type=out_type
@@ -402,7 +406,7 @@ def encrypt(
 def decrypt(
   text, sm4_key, padding='pkcs7', mode='ecb', iv=None, out_type='string'
   ):
-  '''
+  """
   SM4解密
 
   Parameters
@@ -424,7 +428,7 @@ def decrypt(
   -------
   str | list[int]
     根据out_type输出的结果
-  '''
+  """
   return _sm4(
     text, sm4_key, _DECRYPT,
     padding=padding, mode=mode, iv=iv, out_type=out_type

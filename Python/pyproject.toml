@@ -1,0 +1,15 @@
+[project]
+name = "sm-crypto"
+version = "0.1.0"
+description = "Python Implementation of SM-cryption Algorithm"
+authors = [
+    {name = "priscira", email = "104620864+pthumeruihyll@users.noreply.github.com"},
+]
+dependencies = []
+requires-python = ">=3.7"
+readme = "README.md"
+license = {text = "LGPL-2.1-or-later"}
+
+
+[tool.pdm]
+distribution = false

@@ -1,7 +1,11 @@
 [package]
 name = "sm-crypto"
-version = "0.1.0"
+version = "1.0.0"
 edition = "2024"
+authors = ["priscira"]
+description = "Rust Implementation of SM-cryption Algorithm"
+license = "LGPL-2"
+repository = "https://github.com/priscira/sm-crypto"
 
 [dependencies]
 hex = "0.4.3"

@@ -6,6 +6,7 @@ authors = ["priscira"]
 description = "Rust Implementation of SM-cryption Algorithm"
 license = "LGPL-2"
 repository = "https://github.com/priscira/sm-crypto"
+keywords = ["crypto", "sm", "sm2", "sm3", "sm4"]
 
 [dependencies]
 hex = "0.4.3"

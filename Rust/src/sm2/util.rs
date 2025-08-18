@@ -1,3 +1,47 @@
+use der::{Encode, Decode, Sequence};
+use der::asn1::UintRef;
+use num_bigint::BigInt;
+
+
+/// SM2签名的der元素r和s
+#[derive(Copy, Clone, Debug, Eq, PartialEq, Sequence)]
+struct Sm2SignDerRS<'a> {
+  r: UintRef<'a>,
+  s: UintRef<'a>,
+}
+
+
+/// SM2签名 der编码
+/// ## Parameters
+/// - r: sm2的`r`，必须是正数
+/// - s: sm2签名的`s`，必须是正数
+pub fn encode_der(r: &BigInt, s: &BigInt) -> String {
+  let r_byt = r.to_bytes_be().1;
+  let s_byt = s.to_bytes_be().1;
+
+  let sm2_sig_der = Sm2SignDerRS {
+    r: UintRef::new(&r_byt).unwrap(),
+    s: UintRef::new(&s_byt).unwrap(),
+  };
+
+  hex::encode(sm2_sig_der.to_der().unwrap())
+}
+
+
+/// SM2签名 der解码
+/// ## Parameters
+/// - sg_talks: sm2签名的DER编码字符串
+/// ## Returns
+/// sm2签名的`r`和`s`
+pub fn decode_der(sg_talks: &str) -> (BigInt, BigInt) {
+  let sg_byts = hex::decode(sg_talks).unwrap();
+  let sig = Sm2SignDerRS::from_der(sg_byts.as_slice()).unwrap();
+  let r = BigInt::from_bytes_be(num_bigint::Sign::Plus, sig.r.as_bytes());
+  let s = BigInt::from_bytes_be(num_bigint::Sign::Plus, sig.s.as_bytes());
+  (r, s)
+}
+
+
 /// 十六进制字符串左侧零填充
 /// ## Parameters
 /// - hex_talks: 十六进制字符串

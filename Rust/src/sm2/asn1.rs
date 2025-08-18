@@ -1,3 +1,6 @@
+// 废弃，使用der代替
+#[allow(dead_code)]
+
 use num_bigint::BigInt;
 use num_traits::{One, Zero, Signed};
 use num_traits::ToPrimitive;
@@ -220,7 +223,7 @@ fn gain_start_pos_of_v(talks: &str, start: usize) -> usize {
 }
 
 
-/// 编码DER
+/// SM2签名 der编码
 /// ## Parameters
 /// - r: sm2签名的`r`
 /// - s: sm2签名的`s`
@@ -237,7 +240,7 @@ pub fn encode_der(r: &BigInt, s: &BigInt) -> String {
 }
 
 
-/// 解码DER
+/// SM2签名 der解码
 /// ## Parameters
 /// - sg_talks: sm2签名的DER编码字符串
 /// ## Returns

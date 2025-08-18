@@ -9,6 +9,7 @@ repository = "https://github.com/priscira/sm-crypto"
 keywords = ["crypto", "sm", "sm2", "sm3", "sm4"]
 
 [dependencies]
+der = { version = "0.7.10", features = ["derive", "alloc"] }
 hex = "0.4.3"
 num-bigint = { version = "0.4.6", features = ["rand"] }
 num-traits = "0.2.19"

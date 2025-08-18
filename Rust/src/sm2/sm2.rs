@@ -2,7 +2,6 @@ use std::rc::Rc;
 use num_bigint::{BigInt, BigUint, RandBigInt, Sign};
 use num_traits::{Num, One, Zero};
 use rand::rngs::OsRng;
-use crate::sm2::asn1::{decode_der, encode_der};
 use crate::sm2::ec::{ECCurveFp, ECPointFp};
 use crate::sm2::util::*;
 use crate::sm3::achieve::*;

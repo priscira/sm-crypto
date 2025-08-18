@@ -1,4 +1,4 @@
-def hex_to_array(hex_talks):
+def hex_to_arrs(hex_talks):
   """
   十六进制字符串转成数组
 
@@ -15,7 +15,7 @@ def hex_to_array(hex_talks):
   return list(bytes.fromhex(hex_talks))
 
 
-def array_to_hex(hex_arrs):
+def arrs_to_hex(hex_arrs):
   """
   字节数组转十六进制字符串
 
@@ -32,7 +32,7 @@ def array_to_hex(hex_arrs):
   return bytes(hex_arrs).hex()
 
 
-def utf8_to_array(talks):
+def utf8_to_arrs(talks):
   """
   utf-8字符串转成数组
 
@@ -49,7 +49,7 @@ def utf8_to_array(talks):
   return list(talks.encode('utf-8'))
 
 
-def array_to_utf8(arrs):
+def arrs_to_utf8(arrs):
   """
   字节数组转utf-8字符串
 

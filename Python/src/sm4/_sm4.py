@@ -1,5 +1,5 @@
 from enum import Enum
-from ._util import *
+from .util import *
 
 ROUND = 32
 BLOCK = 16
@@ -242,12 +242,12 @@ def _sm4(
 
   if mode == Sm4ModeKind.CBC:
     if isinstance(iv, str):
-      iv = hex_to_array(iv)
+      iv = hex_to_arrs(iv)
     if len(iv) != BLOCK:
       raise ValueError('iv is invalid (must be 16 bytes)')
 
   if isinstance(sm4_key, str):
-    sm4_key = hex_to_array(sm4_key)
+    sm4_key = hex_to_arrs(sm4_key)
   else:
     sm4_key = list(sm4_key)
   if len(sm4_key) != BLOCK:
@@ -326,7 +326,7 @@ def encrypt(plain_text, sm4_key, padding=Sm4PaddingKind.PKCS7, mode=Sm4ModeKind.
   need_str = False
   if isinstance(plain_text, str):
     # 加密输出为utf8字节数组
-    plain_text = utf8_to_array(plain_text)
+    plain_text = utf8_to_arrs(plain_text)
     need_str = True
   else:
     plain_text = list(plain_text)
@@ -336,7 +336,7 @@ def encrypt(plain_text, sm4_key, padding=Sm4PaddingKind.PKCS7, mode=Sm4ModeKind.
     )
   if need_str:
     # 加密，输出十六进制串
-    return array_to_hex(encrypted_text)
+    return arrs_to_hex(encrypted_text)
   return encrypted_text
 
 
@@ -365,7 +365,7 @@ def decrypt(cipher_text, sm4_key, padding=Sm4PaddingKind.PKCS7, mode=Sm4ModeKind
   need_str = False
   if isinstance(cipher_text, str):
     # 解密输出为十六进制字节数组
-    cipher_text = hex_to_array(cipher_text)
+    cipher_text = hex_to_arrs(cipher_text)
     need_str = True
   else:
     cipher_text = list(cipher_text)
@@ -375,7 +375,7 @@ def decrypt(cipher_text, sm4_key, padding=Sm4PaddingKind.PKCS7, mode=Sm4ModeKind
     )
   if need_str:
     # 解密，输出utf8串
-    return array_to_utf8(decrypted_text)
+    return arrs_to_utf8(decrypted_text)
   return decrypted_text
 
 

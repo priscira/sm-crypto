@@ -4,67 +4,15 @@ use sm_crypto::sm4::sm4::*;
 
 
 #[test]
-fn test_sm4_new_ecb_string() {
-  let key = "af32409cf34aeef23f4b328a96100ce1".to_string();
-  let sm4 = Sm4::new(key, Sm4PaddingKind::Pkcs7, Sm4ModeKind::Ecb, None);
-  assert!(sm4.is_ok());
-  let sm4 = sm4.unwrap();
-  assert_eq!(sm4.sm4_key, [175, 50, 64, 156, 243, 74, 238, 242, 63, 75, 50, 138, 150, 16, 12, 225]);
-}
-
-
-#[test]
-fn test_sm4_new_ecb_list() {
-  let key = [175u8, 50, 64, 156, 243, 74, 238, 242, 63, 75, 50, 138, 150, 16, 12, 225];
-  let sm4 = Sm4::new(&key[..], Sm4PaddingKind::Pkcs7, Sm4ModeKind::Ecb, None);
-  assert!(sm4.is_ok());
-  let sm4 = sm4.unwrap();
-  assert_eq!(sm4.sm4_key, [175, 50, 64, 156, 243, 74, 238, 242, 63, 75, 50, 138, 150, 16, 12, 225]);
-}
-
-
-#[test]
-fn test_sm4_new_cbc_string() {
-  let key = "af32409cf34aeef23f4b328a96100ce1";
-  let sm4 = Sm4::new(key, Sm4PaddingKind::Pkcs7, Sm4ModeKind::Cbc, None);
-  assert!(sm4.is_err());
-  assert_eq!(sm4.unwrap_err(), Sm4Error::InvalidData);
-
-  let key = "af32409cf34aeef23f4b328a96100ce1".to_string();
-  let sm4 = Sm4::new(
-    key, Sm4PaddingKind::Pkcs7, Sm4ModeKind::Cbc, Some("32ef4500ad3ecb2a34dcb09aac34bf".to_string()),
-  );
-  assert!(sm4.is_err());
-  assert_eq!(sm4.unwrap_err(), Sm4Error::InvalidData);
-
-  let key = "af32409cf34aeef23f4b328a96100ce1";
-  let sm4 = Sm4::new(
-    key, Sm4PaddingKind::Pkcs7, Sm4ModeKind::Cbc, Some("32ef4500ad3ecb2a34dcb09aac34bfea"),
-  );
-  assert_eq!(
-    sm4.unwrap().sm4_key,
-    [175, 50, 64, 156, 243, 74, 238, 242, 63, 75, 50, 138, 150, 16, 12, 225]
-  );
-
-  let key = "af32409cf34aeef23f4b328a96100ce1".to_string();
-  let sm4 =
-    Sm4::new(key, Sm4PaddingKind::Pkcs7, Sm4ModeKind::Cbc, Some("32ef4500ad3ecb2a34dcb09aac34bfea".to_string()));
-  assert_eq!(
-    sm4.unwrap().sm4_key,
-    [175, 50, 64, 156, 243, 74, 238, 242, 63, 75, 50, 138, 150, 16, 12, 225]
-  );
-}
-
-
-#[test]
 fn test_sm4_ecb_string() {
   let key = "af32409cf34aeef23f4b328a96100ce1";
   let cn_talks = "臂上妆犹在，襟间泪尚盈。".to_string();
   let en_talks = "When I was young I'd listen to the radio, waiting for my favorite songs.";
-  let sm4 = Sm4::new(key, Sm4PaddingKind::Pkcs7, Sm4ModeKind::Ecb, None).unwrap();
+  let sm4 = Sm4::new();
 
-  let cn_talks_ecb = sm4.encrypt(cn_talks.clone()).unwrap();
-  let en_talks_ecb = sm4.encrypt(en_talks).unwrap();
+  let cn_talks_ecb = sm4.encrypt(
+    cn_talks.clone(), key.to_string(), Sm4PaddingKind::Pkcs7, Sm4ModeKind::Ecb, None).unwrap();
+  let en_talks_ecb = sm4.encrypt(en_talks, key, Sm4PaddingKind::Pkcs7, Sm4ModeKind::Ecb, None).unwrap();
   assert_eq!(
     cn_talks_ecb,
     "0fb9045738bf0c9e660743c52753ca36b374a461536971890e8143aa1ae425544c0f0f0bee82d5b2518cd9f89c931709"
@@ -75,8 +23,14 @@ fn test_sm4_ecb_string() {
      4ebe29fcd5094f1f92a37b147eac20eec83323454fc07e1742f00704d2f76109a7b306b7bb530937"
   );
 
-  assert_eq!(sm4.decrypt(cn_talks_ecb).unwrap(), cn_talks);
-  assert_eq!(sm4.decrypt(en_talks_ecb).unwrap(), en_talks);
+  assert_eq!(
+    sm4.decrypt(cn_talks_ecb, key.to_string(), Sm4PaddingKind::Pkcs7, Sm4ModeKind::Ecb, None).unwrap(),
+    cn_talks
+  );
+  assert_eq!(
+    sm4.decrypt(en_talks_ecb, key.to_string(), Sm4PaddingKind::Pkcs7, Sm4ModeKind::Ecb, None).unwrap(),
+    en_talks
+  );
 }
 
 
@@ -93,10 +47,12 @@ fn test_sm4_ecb_list() {
     105, 116, 105, 110, 103, 32, 102, 111, 114, 32, 109, 121, 32, 102, 97, 118, 111, 114, 105, 116, 101,
     32, 115, 111, 110, 103, 115, 46,
   ];
-  let sm4 = Sm4::new(key, Sm4PaddingKind::Pkcs7, Sm4ModeKind::Ecb, None).unwrap();
+  let sm4 = Sm4::new();
 
-  let cn_talks_ecb = sm4.encrypt(cn_talks.clone()).unwrap();
-  let en_talks_ecb = sm4.encrypt(&en_talks[..]).unwrap();
+  let cn_talks_ecb = sm4.encrypt(
+    cn_talks.clone(), key.clone(), Sm4PaddingKind::Pkcs7, Sm4ModeKind::Ecb, None).unwrap();
+  let en_talks_ecb = sm4.encrypt(
+    &en_talks[..], &key, Sm4PaddingKind::Pkcs7, Sm4ModeKind::Ecb, None).unwrap();
   assert_eq!(
     cn_talks_ecb, [
       15, 185, 4, 87, 56, 191, 12, 158, 102, 7, 67, 197, 39, 83, 202, 54, 179, 116, 164, 97, 83, 105, 113,
@@ -113,8 +69,14 @@ fn test_sm4_ecb_list() {
     ]
   );
 
-  assert_eq!(sm4.decrypt(cn_talks_ecb).unwrap(), cn_talks);
-  assert_eq!(sm4.decrypt(en_talks_ecb).unwrap(), en_talks);
+  assert_eq!(
+    sm4.decrypt(cn_talks_ecb, key.clone(), Sm4PaddingKind::Pkcs7, Sm4ModeKind::Ecb, None).unwrap(),
+    cn_talks
+  );
+  assert_eq!(
+    sm4.decrypt(en_talks_ecb, key.clone(), Sm4PaddingKind::Pkcs7, Sm4ModeKind::Ecb, None).unwrap(),
+    en_talks
+  );
 }
 
 
@@ -124,10 +86,13 @@ fn test_sm4_cbc_string() {
   let cn_talks = "臂上妆犹在，襟间泪尚盈。".to_string();
   let en_talks = "When I was young I'd listen to the radio, waiting for my favorite songs.";
   let iv = "32ef4500ad3ecb2a34dcb09aac34bfea";
-  let sm4 = Sm4::new(key, Sm4PaddingKind::Pkcs7, Sm4ModeKind::Cbc, Some(iv)).unwrap();
+  let sm4 = Sm4::new();
 
-  let cn_talks_cbc = sm4.encrypt(cn_talks.clone()).unwrap();
-  let en_talks_cbc = sm4.encrypt(en_talks).unwrap();
+  let cn_talks_cbc = sm4.encrypt(
+    cn_talks.clone(), key.to_string(), Sm4PaddingKind::Pkcs7, Sm4ModeKind::Cbc, Some(iv.to_string())
+  ).unwrap();
+  let en_talks_cbc = sm4.encrypt(
+    en_talks, key, Sm4PaddingKind::Pkcs7, Sm4ModeKind::Cbc, Some(iv)).unwrap();
 
   assert_eq!(
     cn_talks_cbc,
@@ -155,10 +120,12 @@ fn test_sm4_cbc_list() {
     32, 115, 111, 110, 103, 115, 46,
   ];
   let iv: Vec<u8> = vec![50, 239, 69, 0, 173, 62, 203, 42, 52, 220, 176, 154, 172, 52, 191, 234];
-  let sm4 = Sm4::new(key, Sm4PaddingKind::Pkcs7, Sm4ModeKind::Cbc, Some(iv)).unwrap();
+  let sm4 = Sm4::new();
 
-  let cn_talks_cbc = sm4.encrypt(&cn_talks[..]).unwrap();
-  let en_talks_cbc = sm4.encrypt(en_talks).unwrap();
+  let cn_talks_cbc = sm4.encrypt(
+    &cn_talks[..], &key, Sm4PaddingKind::Pkcs7, Sm4ModeKind::Cbc, Some(&iv)).unwrap();
+  let en_talks_cbc = sm4.encrypt(
+    en_talks, key, Sm4PaddingKind::Pkcs7, Sm4ModeKind::Cbc, Some(iv)).unwrap();
 
   assert_eq!(
     cn_talks_cbc, [

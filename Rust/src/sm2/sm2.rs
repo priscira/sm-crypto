@@ -1,3 +1,6 @@
+#![allow(deprecated)]
+
+
 use std::rc::Rc;
 use num_bigint::{BigInt, BigUint, RandBigInt, Sign};
 use num_traits::{Num, One, Zero};
@@ -41,6 +44,7 @@ pub struct Sm2KeyPair {
 
 
 struct Sm2RandomPoint {
+  #[allow(dead_code)]
   pub key_pair: Sm2KeyPair,
   pub k: BigUint,
   pub x1: BigUint,

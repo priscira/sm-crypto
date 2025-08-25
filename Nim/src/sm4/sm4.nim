@@ -1,14 +1,15 @@
-import std/[strutils, sequtils, algorithm]
+import std/[sequtils, algorithm]
+import ./util
 
 type
-  CryptKind = enum
-    ENCRYPT, DECRYPT
+  CryptKind {.pure.} = enum 
+    Encrypt, Decrypt
 
-  ModeKind* = enum
-    ECB, CBC
+  ModeKind* {.pure.} = enum 
+    Ecb, Cbc
 
-  PaddingKind* = enum
-    PKCS5, PKCS7, NONEPAD
+  PaddingKind* {.pure.} = enum 
+    Pkcs5, Pkcs7, NonePad
 
 const
   ROUND = 32
@@ -46,27 +47,6 @@ const CK: array[ROUND, uint32] = [
   0x484f565d'u32, 0x646b7279'u32
 ]
 
-proc hexToArr(hexStr: string): seq[uint8] =
-  ## 十六进制字符串转成数组
-  let hexStrL = hexStr.len div 2
-  return toSeq(0 ..< hexStrL).map(
-    proc(i: int): uint8 = uint8(parseHexInt(hexStr[i * 2 ..< i * 2 + 2]))
-  )
-
-proc arrToHex(hexArrs: openArray[uint8]): string =
-  ## 字节数组转十六进制字符串
-  var hexTalks = ""
-  for hexArri in hexArrs:
-    hexTalks.add(hexArri.toHex(2))
-  return hexTalks
-
-proc utf8ToArr(utfTalks: string): seq[uint8] =
-  ## utf-8字符串转成数组
-  return cast[seq[uint8]](utfTalks)
-
-proc arrToUtf8(utfArrs: openArray[uint8]): string =
-  ## 字节数组转utf-8字符串
-  return cast[string](utfArrs.toSeq)
 
 proc rotl32(val: uint32; left_move_nums: int): uint32 {.inline.} =
   ## 32位循环左移
@@ -151,13 +131,13 @@ proc sms4KeyExt(mk: seq[uint8]; cpKind: CryptKind): seq[uint32] =
     reaps.add(wordTo4)
     words = [words[1], words[2], words[3], wordTo4]
 
-  if cpKind == CryptKind.DECRYPT:
+  if cpKind == CryptKind.Decrypt:
     reaps.reverse()
 
   return reaps
 
 proc sm4(talks: var seq[uint8]; sm4K: seq[uint8]; cpKind: CryptKind;
-         padding: PaddingKind = PaddingKind.PKCS7; mode: ModeKind = ModeKind.ECB;
+         padding: PaddingKind = PaddingKind.Pkcs7; mode: ModeKind = ModeKind.Ecb;
          iv: seq[uint8] = newSeq[uint8]()): seq[uint8] =
   ## SM4加/解密主要逻辑
   ## 
@@ -175,11 +155,11 @@ proc sm4(talks: var seq[uint8]; sm4K: seq[uint8]; cpKind: CryptKind;
   ## 字节数组格式的结果
   if sm4K.len() != BLOCK:
     raise newException(ValueError, "Key must be 16 bytes")
-  if mode == ModeKind.CBC and iv.len() != BLOCK:
+  if mode == ModeKind.Cbc and iv.len() != BLOCK:
     raise newException(ValueError, "IV must be 16 bytes for CBC")
 
   # 新增填充，sm4规定16字节作为一个分组，统一pkcs7
-  if padding != PaddingKind.NONEPAD and cpKind != CryptKind.DECRYPT:
+  if padding != PaddingKind.NonePad and cpKind != CryptKind.Decrypt:
     let padL = BLOCK - (talks.len() mod BLOCK)
     talks.add(repeat(uint8(padL), padL))
 
@@ -189,12 +169,12 @@ proc sm4(talks: var seq[uint8]; sm4K: seq[uint8]; cpKind: CryptKind;
 
   for ofs in countup(0, talks.len - 1, BLOCK):
     var blk: seq[uint8] = talks[ofs ..< ofs + BLOCK]
-    if mode == ModeKind.CBC and cpKind != CryptKind.DECRYPT:
+    if mode == ModeKind.Cbc and cpKind != CryptKind.Decrypt:
       for i in 0 ..< BLOCK:
         blk[i] = blk[i] xor goggaIV[i]
     var sms4Blk = sms4Crypt(blk, rk)
-    if mode == ModeKind.CBC:
-      if cpKind == CryptKind.DECRYPT:
+    if mode == ModeKind.Cbc:
+      if cpKind == CryptKind.Decrypt:
         for i in 0 ..< BLOCK:
           sms4Blk[i] = sms4Blk[i] xor goggaIV[i]
         # 使用上一次输入作为解密向量
@@ -205,15 +185,19 @@ proc sm4(talks: var seq[uint8]; sm4K: seq[uint8]; cpKind: CryptKind;
     reap.add(sms4Blk)
 
   # 去除填充
-  if padding in {PaddingKind.PKCS5, PaddingKind.PKCS7} and cpKind == CryptKind.DECRYPT:
+  if padding in {PaddingKind.Pkcs5, PaddingKind.Pkcs7} and cpKind == CryptKind.Decrypt:
     let padL = reap[^1].int
     if padL <= 0 or padL > BLOCK:
       raise newException(ValueError, "Invalid padding")
     reap.setLen(reap.len() - padL)
   return reap
 
-proc encrypt*(talks: string; sm4K: string;
-              padding: PaddingKind = PaddingKind.PKCS7; mode: ModeKind = ModeKind.ECB;
+
+type Sm4* = object
+
+
+proc encrypt*(sm4: Sm4, talks: string, sm4K: string,
+              padding: PaddingKind = PaddingKind.Pkcs7, mode: ModeKind = ModeKind.Ecb,
               iv: string = ""): string =
   ## SM4加密
   ## 
@@ -231,10 +215,10 @@ proc encrypt*(talks: string; sm4K: string;
   let sm4K = hexToArr(sm4K)
   var ivArr = hexToArr(iv)
   var talkArr = utf8ToArr(talks)
-  return arrToHex(sm4(talkArr, sm4K, CryptKind.ENCRYPT, padding, mode, ivArr))
+  return arrToHex(sm4(talkArr, sm4K, CryptKind.Encrypt, padding, mode, ivArr))
 
-proc encrypt*(talks: var seq[uint8]; sm4K: seq[uint8];
-              padding: PaddingKind = PaddingKind.PKCS7; mode: ModeKind = ModeKind.ECB;
+proc encrypt*(sm4: Sm4, talks: var seq[uint8]; sm4K: seq[uint8];
+              padding: PaddingKind = PaddingKind.Pkcs7; mode: ModeKind = ModeKind.Ecb;
               iv: seq[uint8] = newSeq[uint8]()): seq[uint8] =
   ## SM4加密
   ## 
@@ -249,10 +233,10 @@ proc encrypt*(talks: var seq[uint8]; sm4K: seq[uint8];
   ## Returns
   ## -------
   ## 十六进制加密字符串
-  return sm4(talks, sm4K, CryptKind.ENCRYPT, padding, mode, iv)
+  return sm4(talks, sm4K, CryptKind.Encrypt, padding, mode, iv)
 
-proc decrypt*(talks: string; sm4K: string;
-              padding: PaddingKind = PaddingKind.PKCS7; mode: ModeKind = ModeKind.ECB;
+proc decrypt*(sm4: Sm4, talks: string; sm4K: string;
+              padding: PaddingKind = PaddingKind.Pkcs7; mode: ModeKind = ModeKind.Ecb;
               iv: string = ""): string =
   ## SM4解密
   ## 
@@ -270,10 +254,10 @@ proc decrypt*(talks: string; sm4K: string;
   let sm4K = hexToArr(sm4K)
   var ivArr = hexToArr(iv)
   var talkArr = hexToArr(talks)
-  return arrToUtf8(sm4(talkArr, sm4K, CryptKind.DECRYPT, padding, mode, ivArr))
+  return arrToUtf8(sm4(talkArr, sm4K, CryptKind.Decrypt, padding, mode, ivArr))
 
-proc decrypt*(talks: var seq[uint8]; sm4K: seq[uint8];
-              padding: PaddingKind = PaddingKind.PKCS7; mode: ModeKind = ModeKind.ECB;
+proc decrypt*(sm4: Sm4, talks: var seq[uint8]; sm4K: seq[uint8];
+              padding: PaddingKind = PaddingKind.Pkcs7; mode: ModeKind = ModeKind.Ecb;
               iv: seq[uint8] = newSeq[uint8]()): seq[uint8] =
   ## SM4解密
   ## 
@@ -288,4 +272,4 @@ proc decrypt*(talks: var seq[uint8]; sm4K: seq[uint8];
   ## Returns
   ## -------
   ## utf-8编码解密字符串
-  return sm4(talks, sm4K, CryptKind.DECRYPT, padding, mode, iv)
+  return sm4(talks, sm4K, CryptKind.Decrypt, padding, mode, iv)

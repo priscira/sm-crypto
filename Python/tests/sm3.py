@@ -1,6 +1,6 @@
 # python -m unittest tests/sm3.py
 import unittest
-from src.sm3 import *
+from src import Sm3, Sm3ModeKind
 
 
 class TestSm3(unittest.TestCase):

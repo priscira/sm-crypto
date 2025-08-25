@@ -301,92 +301,9 @@ def _sm4(
   return reaps
 
 
-def encrypt(plain_text, sm4_key, padding=Sm4PaddingKind.PKCS7, mode=Sm4ModeKind.ECB, iv=None):
-  """
-  SM4加密
-
-  Parameters
-  ----------
-  plain_text: str | bytes | list[int]
-    加密文本。如果是字符串，要求UTF-8编码格式
-  sm4_key: str | bytes | list[int]
-    SM4密钥，如果是字符串需要满足HEX格式，否则应该提供字节数组
-  padding: Sm4PaddingKind
-    padding方式，默认pkcs7，可选pkcs5、pkcs7、None
-  mode: Sm4ModeKind
-    加/解密方式，默认ecb，可选cbc、ecb、None
-  iv: str | list[int] | None
-    CBC方式IV向量，默认为空数组
-
-  Returns
-  -------
-  str | list[int]
-    加密结果，如果plain_text是字符串，则返回十六进制字符串，否则返回字节数组
-  """
-  need_str = False
-  if isinstance(plain_text, str):
-    # 加密输出为utf8字节数组
-    plain_text = utf8_to_arrs(plain_text)
-    need_str = True
-  else:
-    plain_text = list(plain_text)
-  encrypted_text = _sm4(
-    plain_text, sm4_key, _Sm4CryptoKind.ENCRYPT,
-    padding=padding, mode=mode, iv=iv
-    )
-  if need_str:
-    # 加密，输出十六进制串
-    return arrs_to_hex(encrypted_text)
-  return encrypted_text
-
-
-def decrypt(cipher_text, sm4_key, padding=Sm4PaddingKind.PKCS7, mode=Sm4ModeKind.ECB, iv=None):
-  """
-  SM4解密
-
-  Parameters
-  ----------
-  cipher_text: str | bytes | list[int]
-    解密文本。如果是字符串，要求HEX格式
-  sm4_key: str | bytes | list[int]
-    SM4密钥，如果是字符串需要满足HEX格式，否则应该提供字节数组
-  padding: Sm4PaddingKind
-    padding方式，默认pkcs7，可选pkcs5、pkcs7、None
-  mode: Sm4ModeKind
-    加/解密方式，默认ecb，可选cbc、ecb、None
-  iv: str | list[int] | None
-    CBC方式IV向量，默认为空数组
-
-  Returns
-  -------
-  str | list[int]
-    解密结果，如果cipher_text是字符串，则返回utf8字符串，否则返回字节数组
-  """
-  need_str = False
-  if isinstance(cipher_text, str):
-    # 解密输出为十六进制字节数组
-    cipher_text = hex_to_arrs(cipher_text)
-    need_str = True
-  else:
-    cipher_text = list(cipher_text)
-  decrypted_text = _sm4(
-    cipher_text, sm4_key, _Sm4CryptoKind.DECRYPT,
-    padding=padding, mode=mode, iv=iv
-    )
-  if need_str:
-    # 解密，输出utf8串
-    return arrs_to_utf8(decrypted_text)
-  return decrypted_text
-
-
-class SM4:
-  def __init__(self, sm4_key, padding=Sm4PaddingKind.PKCS7, mode=Sm4ModeKind.ECB, iv=None):
-    self.sm4_key = sm4_key
-    self.padding = padding
-    self.mode = mode
-    self.iv = iv
-
-  def encrypt(self, plain_text):
+class Sm4:
+  @staticmethod
+  def encrypt(plain_text, sm4_key, padding=Sm4PaddingKind.PKCS7, mode=Sm4ModeKind.ECB, iv=None):
     """
     SM4加密
 
@@ -394,15 +311,38 @@ class SM4:
     ----------
     plain_text: str | bytes | list[int]
       加密文本。如果是字符串，要求UTF-8编码格式
+    sm4_key: str | bytes | list[int]
+      SM4密钥，如果是字符串需要满足HEX格式，否则应该提供字节数组
+    padding: Sm4PaddingKind
+      padding方式，默认pkcs7，可选pkcs5、pkcs7、None
+    mode: Sm4ModeKind
+      加/解密方式，默认ecb，可选cbc、ecb、None
+    iv: str | list[int] | None
+      CBC方式IV向量，默认为空数组
 
     Returns
     -------
     str | list[int]
       加密结果，如果plain_text是字符串，则返回十六进制字符串，否则返回字节数组
     """
-    return encrypt(plain_text, self.sm4_key, padding=self.padding, mode=self.mode, iv=self.iv)
+    need_str = False
+    if isinstance(plain_text, str):
+      # 加密输出为utf8字节数组
+      plain_text = utf8_to_arrs(plain_text)
+      need_str = True
+    else:
+      plain_text = list(plain_text)
+    encrypted_text = _sm4(
+      plain_text, sm4_key, _Sm4CryptoKind.ENCRYPT,
+      padding=padding, mode=mode, iv=iv
+      )
+    if need_str:
+      # 加密，输出十六进制串
+      return arrs_to_hex(encrypted_text)
+    return encrypted_text
 
-  def decrypt(self, cipher_text):
+  @staticmethod
+  def decrypt(cipher_text, sm4_key, padding=Sm4PaddingKind.PKCS7, mode=Sm4ModeKind.ECB, iv=None):
     """
     SM4解密
 
@@ -410,10 +350,32 @@ class SM4:
     ----------
     cipher_text: str | bytes | list[int]
       解密文本。如果是字符串，要求HEX格式
+    sm4_key: str | bytes | list[int]
+      SM4密钥，如果是字符串需要满足HEX格式，否则应该提供字节数组
+    padding: Sm4PaddingKind
+      padding方式，默认pkcs7，可选pkcs5、pkcs7、None
+    mode: Sm4ModeKind
+      加/解密方式，默认ecb，可选cbc、ecb、None
+    iv: str | list[int] | None
+      CBC方式IV向量，默认为空数组
 
     Returns
     -------
     str | list[int]
       解密结果，如果cipher_text是字符串，则返回utf8字符串，否则返回字节数组
     """
-    return decrypt(cipher_text, self.sm4_key, padding=self.padding, mode=self.mode, iv=self.iv)
+    need_str = False
+    if isinstance(cipher_text, str):
+      # 解密输出为十六进制字节数组
+      cipher_text = hex_to_arrs(cipher_text)
+      need_str = True
+    else:
+      cipher_text = list(cipher_text)
+    decrypted_text = _sm4(
+      cipher_text, sm4_key, _Sm4CryptoKind.DECRYPT,
+      padding=padding, mode=mode, iv=iv
+      )
+    if need_str:
+      # 解密，输出utf8串
+      return arrs_to_utf8(decrypted_text)
+    return decrypted_text

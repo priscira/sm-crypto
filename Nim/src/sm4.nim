@@ -1,7 +1,7 @@
 import std/[strutils, sequtils, algorithm]
 
 type
-  CryptKind* = enum
+  CryptKind = enum
     ENCRYPT, DECRYPT
 
   ModeKind* = enum

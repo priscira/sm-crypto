@@ -1,9 +1,7 @@
-from ._sm4 import SM4, Sm4PaddingKind, Sm4ModeKind, encrypt, decrypt
+from ._sm4 import Sm4, Sm4PaddingKind, Sm4ModeKind
 
 __all__ = [
-  "SM4",
+  "Sm4",
   "Sm4PaddingKind",
-  "Sm4ModeKind",
-  "encrypt",
-  "decrypt"
+  "Sm4ModeKind"
   ]

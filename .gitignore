@@ -19,3 +19,5 @@ Rust/Cargo.lock
 
 Nim/nimcache/
 Nim/testresults/
+Nim/tests/*
+!Nim/tests/*.nim

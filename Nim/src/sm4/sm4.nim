@@ -1,6 +1,7 @@
 import std/[sequtils, algorithm]
 import ./util
 
+
 type
   CryptKind {.pure.} = enum 
     Encrypt, Decrypt
@@ -11,9 +12,11 @@ type
   PaddingKind* {.pure.} = enum 
     Pkcs5, Pkcs7, NonePad
 
+
 const
   ROUND = 32
   BLOCK = 16
+
 
 const SBOX: array[256, uint8] = [
   0xd6'u8, 0x90, 0xe9, 0xfe, 0xcc, 0xe1, 0x3d, 0xb7, 0x16, 0xb6, 0x14, 0xc2, 0x28,
@@ -38,6 +41,7 @@ const SBOX: array[256, uint8] = [
   0x20, 0x79, 0xee, 0x5f, 0x3e, 0xd7, 0xcb, 0x39, 0x48
 ]
 
+
 const CK: array[ROUND, uint32] = [
   0x00070e15'u32, 0x1c232a31'u32, 0x383f464d'u32, 0x545b6269'u32, 0x70777e85'u32, 0x8c939aa1'u32,
   0xa8afb6bd'u32, 0xc4cbd2d9'u32, 0xe0e7eef5'u32, 0xfc030a11'u32, 0x181f262d'u32, 0x343b4249'u32,
@@ -52,6 +56,7 @@ proc rotl32(val: uint32; left_move_nums: int): uint32 {.inline.} =
   ## 32位循环左移
   (val shl left_move_nums) or (val shr (32 - left_move_nums))
 
+
 proc byteSub(num: uint32): uint32 {.inline.} =
   ## 非线性变换，逐字节查s盒
   uint32(SBOX[(num shr 24) and 0xFF]) shl 24 or
@@ -59,13 +64,16 @@ proc byteSub(num: uint32): uint32 {.inline.} =
   uint32(SBOX[(num shr 8)  and 0xFF]) shl 8  or
   uint32(SBOX[num and 0xFF])
 
+
 proc l1(num: uint32): uint32 {.inline.} =
   ## 线性变换l，用于给轮函数加密/解密
   num xor rotl32(num, 2) xor rotl32(num, 10) xor rotl32(num, 18) xor rotl32(num, 24)
 
+
 proc l2(num: uint32): uint32 {.inline.} =
   ## 线性变换l'，扩展密钥
   num xor rotl32(num, 13) xor rotl32(num, 23)
+
 
 proc sms4Crypt(blk: seq[uint8]; rks: openArray[uint32]): seq[uint8] =
   ## 对16字节明/密文块执行一次SMS4轮变换
@@ -99,6 +107,7 @@ proc sms4Crypt(blk: seq[uint8]; rks: openArray[uint32]): seq[uint8] =
     reaps.add(uint8(words[i]))
 
   return reaps
+
 
 proc sms4KeyExt(mk: seq[uint8]; cpKind: CryptKind): seq[uint32] =
   ## 密钥扩展，将128比特的密钥变成32个32比特的轮密钥
@@ -135,6 +144,7 @@ proc sms4KeyExt(mk: seq[uint8]; cpKind: CryptKind): seq[uint32] =
     reaps.reverse()
 
   return reaps
+
 
 proc sm4(talks: var seq[uint8]; sm4K: seq[uint8]; cpKind: CryptKind;
          padding: PaddingKind = PaddingKind.Pkcs7; mode: ModeKind = ModeKind.Ecb;
@@ -217,6 +227,7 @@ proc encrypt*(sm4: Sm4, talks: string, sm4K: string,
   var talkArr = utf8ToArr(talks)
   return arrToHex(sm4(talkArr, sm4K, CryptKind.Encrypt, padding, mode, ivArr))
 
+
 proc encrypt*(sm4: Sm4, talks: var seq[uint8]; sm4K: seq[uint8];
               padding: PaddingKind = PaddingKind.Pkcs7; mode: ModeKind = ModeKind.Ecb;
               iv: seq[uint8] = newSeq[uint8]()): seq[uint8] =
@@ -234,6 +245,7 @@ proc encrypt*(sm4: Sm4, talks: var seq[uint8]; sm4K: seq[uint8];
   ## -------
   ## 十六进制加密字符串
   return sm4(talks, sm4K, CryptKind.Encrypt, padding, mode, iv)
+
 
 proc decrypt*(sm4: Sm4, talks: string; sm4K: string;
               padding: PaddingKind = PaddingKind.Pkcs7; mode: ModeKind = ModeKind.Ecb;
@@ -255,6 +267,7 @@ proc decrypt*(sm4: Sm4, talks: string; sm4K: string;
   var ivArr = hexToArr(iv)
   var talkArr = hexToArr(talks)
   return arrToUtf8(sm4(talkArr, sm4K, CryptKind.Decrypt, padding, mode, ivArr))
+
 
 proc decrypt*(sm4: Sm4, talks: var seq[uint8]; sm4K: seq[uint8];
               padding: PaddingKind = PaddingKind.Pkcs7; mode: ModeKind = ModeKind.Ecb;

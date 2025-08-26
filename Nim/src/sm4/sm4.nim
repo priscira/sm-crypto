@@ -1,5 +1,5 @@
 import std/[sequtils, algorithm]
-import ./util
+import "./util"
 
 
 type

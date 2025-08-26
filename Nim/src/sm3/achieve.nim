@@ -128,7 +128,7 @@ proc sm3Digest*(bytArrs: seq[uint8]): seq[uint8] =
   return bytArrs
 
 
-proc sm3Hmac(sm3K: seq[uint8], val: seq[uint8]): seq[uint8] = 
+proc sm3Hmac*(sm3K: seq[uint8], val: seq[uint8]): seq[uint8] = 
   ## HMAC-SM3认证算法
   ##
   ## Parameters

@@ -3,6 +3,7 @@ import std/[sequtils]
 
 proc rotl32(val: uint32, left_move_nums: int): uint32 {.inline.} =
   ## 32位循环左移
+  let left_move_nums = left_move_nums and 31
   (val shl left_move_nums) or (val shr (32 - left_move_nums))
 
 
@@ -52,7 +53,7 @@ proc sm3Digest*(bytArrs: seq[uint8]): seq[uint8] =
   bytArrs.add(0x80)
   bytArrs.add(kArrs)
   for i in countdown(56, 0, 8):
-    bytArrs.add(uint8((bytl shr i) and 0xff))
+    bytArrs.add(uint8(bytl shr i))
 
   var sm3V = [
     0x7380166f'u32, 0x4914b2b9'u32, 0x172442d7'u32, 0xda8a0600'u32,
@@ -63,23 +64,23 @@ proc sm3Digest*(bytArrs: seq[uint8]): seq[uint8] =
   var
     w: array[0..67, uint32] = arrayWith(0'u32, 68)
     m: array[0..63, uint32] = arrayWith(0'u32, 64)
-  for i in countup(0, bytl):
+  for i in countup(0, bytl - 1):
     w = arrayWith(0'u32, 68)
     m = arrayWith(0'u32, 64)
     # 将消息分组B划分为16个字W0, W1, \dots, W15
-    for j in countup(0, 16):
+    for j in countup(0, 15):
       var k = i * 64 + j * 4
       w[j] = (uint32(bytArrs[k]) shl 24) or
         (uint32(bytArrs[k + 1]) shl 16) or
         (uint32(bytArrs[k + 2]) shl 8) or
         (uint32(bytArrs[k + 3]))
     # W16 -> W67：W[i] <- P1(W[i−16] xor W[i−9] xor (W[i−3] <<< 15)) xor (W[i−13] <<< 7) xor W[i−6]
-    for j in countup(16, 68):
+    for j in countup(16, 67):
       w[j] = (p1(w[j - 16] xor w[j - 9] xor rotl32(w[j - 3], 15)) xor rotl32(w[j - 13], 7)) xor w[j - 6]
     # W′0 ～ W′63：W′[i] = W[i] xor W[i+4]
-    for j in countup(0, 64):
+    for j in countup(0, 63):
       m[j] = w[j] xor w[j + 4]
-  
+
     var
       a = sm3V[0]
       b = sm3V[1]
@@ -89,17 +90,17 @@ proc sm3Digest*(bytArrs: seq[uint8]): seq[uint8] =
       f = sm3V[5]
       g = sm3V[6]
       h = sm3V[7]
-    for j in countup(0, 64):
-      var t = if i <= 15: 0x79cc4519'u32 else: 0x7a879d8a'u32
+    for j in countup(0, 63):
+      var t = if j <= 15: 0x79cc4519'u32 else: 0x7a879d8a'u32
       # SS1 = rotl(rotl(A, 12) + E + rotl(T, i), 7)
       var ss1 = rotl32(rotl32(a, 12) + e + rotl32(t, j), 7)
       # SS2 = SS1 ^ rotl(A, 12)
       var ss2 = ss1 xor rotl32(a, 12)
       # TT1 = (i >= 0 && i <= 15 ? ((A ^ B) ^ C) : (((A & B) | (A & C)) | (B & C))) + D + SS2 + M[i]
-      var tt1 = if i <= 15: a xor b xor c else: (a and b) or (a and c) or (b and c)
+      var tt1 = if j <= 15: a xor b xor c else: (a and b) or (a and c) or (b and c)
       tt1 = tt1 + d + ss2 + m[j]
       # TT2 = (i >= 0 && i <= 15 ? ((E ^ F) ^ G) : ((E & F) | ((~E) & G))) + H + SS1 + W[i]
-      var tt2 = if i <= 15: e xor f xor g else: (e and f) or ((not e) and g)
+      var tt2 = if j <= 15: e xor f xor g else: (e and f) or ((not e) and g)
       tt2 = tt2 + h + ss1 + w[j]
 
       d = c
@@ -110,6 +111,7 @@ proc sm3Digest*(bytArrs: seq[uint8]): seq[uint8] =
       g = rotl32(f, 19)
       f = e
       e = p0(tt2)
+
     sm3V[0] = sm3V[0] xor a
     sm3V[1] = sm3V[1] xor b
     sm3V[2] = sm3V[2] xor c
@@ -118,14 +120,14 @@ proc sm3Digest*(bytArrs: seq[uint8]): seq[uint8] =
     sm3V[5] = sm3V[5] xor f
     sm3V[6] = sm3V[6] xor g
     sm3V[7] = sm3V[7] xor h
-
+  
   var reap = newSeq[uint8]()
   for sm3Vi in sm3V:
     reap.add([
       uint8(sm3Vi shr 24), uint8(sm3Vi shr 16), uint8(sm3Vi shr 8), uint8(sm3Vi)
     ])
 
-  return bytArrs
+  return reap
 
 
 proc sm3Hmac*(sm3K: seq[uint8], val: seq[uint8]): seq[uint8] = 

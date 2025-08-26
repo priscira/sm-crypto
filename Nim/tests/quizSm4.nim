@@ -1,10 +1,10 @@
-# testament p "tests/quiz_sm4.nim"
+# testament p "tests/quizSm4.nim"
 
 discard """
   action: "run"
 """
 import std/sequtils
-import sm4/sm4
+import "sm4/sm4"
 
 
 proc quizSm4TalkEcb() =

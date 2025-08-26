@@ -43,7 +43,6 @@ fn sm3_pad(byt_arrs: &[u8]) -> Vec<u8> {
   }
   // kArr
   reap.extend(vec![0u8; kl]);
-
   // lenArr
   reap.extend_from_slice(&[
     (bytl >> 56) as u8,

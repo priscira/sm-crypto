@@ -11,8 +11,9 @@ fn test_sm4_ecb_string() {
   let sm4 = Sm4::new();
 
   let cn_talks_ecb = sm4.encrypt(
-    cn_talks.clone(), key.to_string(), Sm4PaddingKind::Pkcs7, Sm4ModeKind::Ecb, None).unwrap();
-  let en_talks_ecb = sm4.encrypt(en_talks, key, Sm4PaddingKind::Pkcs7, Sm4ModeKind::Ecb, None).unwrap();
+    cn_talks.clone(), key.to_string(), Sm4ModeKind::Ecb, Some(Sm4PaddingKind::Pkcs7), None).unwrap();
+  let en_talks_ecb = sm4.encrypt(
+    en_talks, key, Sm4ModeKind::Ecb, Some(Sm4PaddingKind::Pkcs7), None).unwrap();
   assert_eq!(
     cn_talks_ecb,
     "0fb9045738bf0c9e660743c52753ca36b374a461536971890e8143aa1ae425544c0f0f0bee82d5b2518cd9f89c931709"
@@ -24,11 +25,13 @@ fn test_sm4_ecb_string() {
   );
 
   assert_eq!(
-    sm4.decrypt(cn_talks_ecb, key.to_string(), Sm4PaddingKind::Pkcs7, Sm4ModeKind::Ecb, None).unwrap(),
+    sm4.decrypt(
+      cn_talks_ecb, key.to_string(), Sm4ModeKind::Ecb, Some(Sm4PaddingKind::Pkcs7), None).unwrap(),
     cn_talks
   );
   assert_eq!(
-    sm4.decrypt(en_talks_ecb, key.to_string(), Sm4PaddingKind::Pkcs7, Sm4ModeKind::Ecb, None).unwrap(),
+    sm4.decrypt(
+      en_talks_ecb, key.to_string(), Sm4ModeKind::Ecb, Some(Sm4PaddingKind::Pkcs7), None).unwrap(),
     en_talks
   );
 }
@@ -50,9 +53,9 @@ fn test_sm4_ecb_list() {
   let sm4 = Sm4::new();
 
   let cn_talks_ecb = sm4.encrypt(
-    cn_talks.clone(), key.clone(), Sm4PaddingKind::Pkcs7, Sm4ModeKind::Ecb, None).unwrap();
+    cn_talks.clone(), key.clone(), Sm4ModeKind::Ecb, Some(Sm4PaddingKind::Pkcs7), None).unwrap();
   let en_talks_ecb = sm4.encrypt(
-    &en_talks[..], &key, Sm4PaddingKind::Pkcs7, Sm4ModeKind::Ecb, None).unwrap();
+    &en_talks[..], &key, Sm4ModeKind::Ecb, Some(Sm4PaddingKind::Pkcs7), None).unwrap();
   assert_eq!(
     cn_talks_ecb, [
       15, 185, 4, 87, 56, 191, 12, 158, 102, 7, 67, 197, 39, 83, 202, 54, 179, 116, 164, 97, 83, 105, 113,
@@ -70,11 +73,11 @@ fn test_sm4_ecb_list() {
   );
 
   assert_eq!(
-    sm4.decrypt(cn_talks_ecb, key.clone(), Sm4PaddingKind::Pkcs7, Sm4ModeKind::Ecb, None).unwrap(),
+    sm4.decrypt(cn_talks_ecb, key.clone(), Sm4ModeKind::Ecb, Some(Sm4PaddingKind::Pkcs7), None).unwrap(),
     cn_talks
   );
   assert_eq!(
-    sm4.decrypt(en_talks_ecb, key.clone(), Sm4PaddingKind::Pkcs7, Sm4ModeKind::Ecb, None).unwrap(),
+    sm4.decrypt(en_talks_ecb, key.clone(), Sm4ModeKind::Ecb, Some(Sm4PaddingKind::Pkcs7), None).unwrap(),
     en_talks
   );
 }
@@ -89,10 +92,10 @@ fn test_sm4_cbc_string() {
   let sm4 = Sm4::new();
 
   let cn_talks_cbc = sm4.encrypt(
-    cn_talks.clone(), key.to_string(), Sm4PaddingKind::Pkcs7, Sm4ModeKind::Cbc, Some(iv.to_string())
+    cn_talks.clone(), key.to_string(), Sm4ModeKind::Cbc, Some(Sm4PaddingKind::Pkcs7), Some(iv.to_string())
   ).unwrap();
   let en_talks_cbc = sm4.encrypt(
-    en_talks, key, Sm4PaddingKind::Pkcs7, Sm4ModeKind::Cbc, Some(iv)).unwrap();
+    en_talks, key, Sm4ModeKind::Cbc, Some(Sm4PaddingKind::Pkcs7), Some(iv)).unwrap();
 
   assert_eq!(
     cn_talks_cbc,
@@ -123,9 +126,9 @@ fn test_sm4_cbc_list() {
   let sm4 = Sm4::new();
 
   let cn_talks_cbc = sm4.encrypt(
-    &cn_talks[..], &key, Sm4PaddingKind::Pkcs7, Sm4ModeKind::Cbc, Some(&iv)).unwrap();
+    &cn_talks[..], &key, Sm4ModeKind::Cbc, Some(Sm4PaddingKind::Pkcs7), Some(&iv)).unwrap();
   let en_talks_cbc = sm4.encrypt(
-    en_talks, key, Sm4PaddingKind::Pkcs7, Sm4ModeKind::Cbc, Some(iv)).unwrap();
+    en_talks, key, Sm4ModeKind::Cbc, Some(Sm4PaddingKind::Pkcs7), Some(iv)).unwrap();
 
   assert_eq!(
     cn_talks_cbc, [

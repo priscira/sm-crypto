@@ -15,7 +15,7 @@ pub enum Sm3Error {
 
 #[derive(Debug, PartialEq, Eq)]
 pub enum Sm3ModeKind {
-  HMAC
+  Hmac
 }
 
 
@@ -43,7 +43,7 @@ impl Sm3 {
     let mut plain_text_arrs = utf8_to_arrs(plain_text.as_ref());
 
     if let Some(sm3_mode_kind) = sm3_mode_kind {
-      if sm3_mode_kind != Sm3ModeKind::HMAC {
+      if sm3_mode_kind != Sm3ModeKind::Hmac {
         return Err(Sm3Error::UnsupportedMode);
       }
 

@@ -37,7 +37,6 @@ pub enum Sm4ModeKind {
 pub enum Sm4PaddingKind {
   Pkcs5,
   Pkcs7,
-  NonePad,
 }
 
 
@@ -168,8 +167,8 @@ fn sms4_key_ext(mk: &[u8], crypt_kind: &Sm4CryptoKind) -> Result<Vec<u32>, Sm4Er
 #[derive(Debug)]
 struct Sm4Params {
   sm4_key: Vec<u8>,
-  padding: Sm4PaddingKind,
   mode: Sm4ModeKind,
+  padding: Option<Sm4PaddingKind>,
   iv: Option<Vec<u8>>,
 }
 
@@ -178,11 +177,11 @@ impl Sm4Params {
   /// 创建SM4加解密参数实例
   /// ## Parameters
   /// - sm4_key: 128比特的SM4主密钥，支持Vec<u8>, &[u8], String, &str
-  /// - padding: 明文填充方式
   /// - mode: 加密模式
+  /// - padding: 明文填充方式
   /// - iv: 初始向量，CBC模式时必填
   pub fn new<T: ConvertByteArr>(
-    sm4_key: T, padding: Sm4PaddingKind, mode: Sm4ModeKind, iv: Option<T>,
+    sm4_key: T, mode: Sm4ModeKind, padding: Option<Sm4PaddingKind>, iv: Option<T>,
   ) -> Result<Self, Sm4Error> {
     let sm4_key = sm4_key.convert_to_byte_arrs(EnDecodingKind::Hex)?;
     if sm4_key.len() != BLOCK {
@@ -236,7 +235,7 @@ impl Sm4 {
     let mut gogga_iv = sm4_params.iv.clone().unwrap_or_default();
     let mut reap: Vec<u8> = Vec::new();
 
-    if sm4_params.padding != Sm4PaddingKind::NonePad && cp_kind != Sm4CryptoKind::Decrypt {
+    if sm4_params.padding.is_some() && cp_kind != Sm4CryptoKind::Decrypt {
       let padl = BLOCK - (arrs.len() % BLOCK);
       arrs.extend(std::iter::repeat(padl as u8).take(padl));
     }
@@ -263,8 +262,8 @@ impl Sm4 {
     }
 
     // 解密时去除 padding
-    if matches!(sm4_params.padding, Sm4PaddingKind::Pkcs5 | Sm4PaddingKind::Pkcs7) &&
-      cp_kind == Sm4CryptoKind::Decrypt {
+    if cp_kind == Sm4CryptoKind::Decrypt && sm4_params.padding.is_some() {
+      // matches!(sm4_params.padding, Sm4PaddingKind::Pkcs5 | Sm4PaddingKind::Pkcs7)
       let padl = *reap.last().ok_or(Sm4Error::PaddingError)? as usize;
       if padl == 0 || padl > BLOCK {
         return Err(Sm4Error::PaddingError);
@@ -348,10 +347,10 @@ impl_convert_bytearr_about_str!(String, &str);
 
 pub trait Sm4CryptoTrait {
   fn encrypt<T: ConvertByteArr>(
-    &self, plain_text: T, sm4_key: T, padding: Sm4PaddingKind, mode: Sm4ModeKind, iv: Option<T>,
+    &self, plain_text: T, sm4_key: T, mode: Sm4ModeKind, padding: Option<Sm4PaddingKind>, iv: Option<T>,
   ) -> Result<T::OutputType, Sm4Error>;
   fn decrypt<T: ConvertByteArr>(
-    &self, cipher_text: T, sm4_key: T, padding: Sm4PaddingKind, mode: Sm4ModeKind, iv: Option<T>,
+    &self, cipher_text: T, sm4_key: T, mode: Sm4ModeKind, padding: Option<Sm4PaddingKind>, iv: Option<T>,
   ) -> Result<T::OutputType, Sm4Error>;
 }
 
@@ -363,10 +362,10 @@ impl Sm4CryptoTrait for Sm4 {
   /// ## Returns
   /// 加密结果（字节数组或字符串）；出错时返回Sm4Error
   fn encrypt<T: ConvertByteArr>(
-    &self, plain_text: T, sm4_key: T, padding: Sm4PaddingKind, mode: Sm4ModeKind, iv: Option<T>,
+    &self, plain_text: T, sm4_key: T, mode: Sm4ModeKind, padding: Option<Sm4PaddingKind>, iv: Option<T>,
   ) -> Result<T::OutputType, Sm4Error> {
     let plain_text_arrs = plain_text.convert_to_byte_arrs(EnDecodingKind::Utf8)?;
-    let sm4_params = Sm4Params::new(sm4_key, padding, mode, iv)?;
+    let sm4_params = Sm4Params::new(sm4_key, mode, padding, iv)?;
     let reap = self.sm4(plain_text_arrs, Sm4CryptoKind::Encrypt, sm4_params)?;
     T::convert_fo_byte_arrs(reap, EnDecodingKind::Hex)
   }
@@ -377,10 +376,10 @@ impl Sm4CryptoTrait for Sm4 {
   /// ## Returns
   /// 解密结果（字节数组或字符串）；出错时返回Sm4Error
   fn decrypt<T: ConvertByteArr>(
-    &self, cipher_text: T, sm4_key: T, padding: Sm4PaddingKind, mode: Sm4ModeKind, iv: Option<T>,
+    &self, cipher_text: T, sm4_key: T, mode: Sm4ModeKind, padding: Option<Sm4PaddingKind>, iv: Option<T>,
   ) -> Result<T::OutputType, Sm4Error> {
     let cipher_text_arrs = cipher_text.convert_to_byte_arrs(EnDecodingKind::Hex)?;
-    let sm4_params = Sm4Params::new(sm4_key, padding, mode, iv)?;
+    let sm4_params = Sm4Params::new(sm4_key, mode, padding, iv)?;
     let reap = self.sm4(cipher_text_arrs, Sm4CryptoKind::Decrypt, sm4_params)?;
     T::convert_fo_byte_arrs(reap, EnDecodingKind::Utf8)
   }

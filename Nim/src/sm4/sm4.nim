@@ -6,10 +6,10 @@ type
   CryptKind {.pure.} = enum 
     Encrypt, Decrypt
 
-  ModeKind* {.pure.} = enum 
+  Sm4ModeKind* {.pure.} = enum 
     Ecb, Cbc
 
-  PaddingKind* {.pure.} = enum 
+  Sm4PaddingKind* {.pure.} = enum 
     Pkcs5, Pkcs7, NonePad
 
 
@@ -147,7 +147,7 @@ proc sms4KeyExt(mk: seq[uint8]; cpKind: CryptKind): seq[uint32] =
 
 
 proc sm4(talks: var seq[uint8]; sm4K: seq[uint8]; cpKind: CryptKind;
-         padding: PaddingKind = PaddingKind.Pkcs7; mode: ModeKind = ModeKind.Ecb;
+         padding: Sm4PaddingKind = Sm4PaddingKind.Pkcs7; mode: Sm4ModeKind = Sm4ModeKind.Ecb;
          iv: seq[uint8] = newSeq[uint8]()): seq[uint8] =
   ## SM4加/解密主要逻辑
   ## 
@@ -165,11 +165,11 @@ proc sm4(talks: var seq[uint8]; sm4K: seq[uint8]; cpKind: CryptKind;
   ## 字节数组格式的结果
   if sm4K.len() != BLOCK:
     raise newException(ValueError, "Key must be 16 bytes")
-  if mode == ModeKind.Cbc and iv.len() != BLOCK:
+  if mode == Sm4ModeKind.Cbc and iv.len() != BLOCK:
     raise newException(ValueError, "IV must be 16 bytes for CBC")
 
   # 新增填充，sm4规定16字节作为一个分组，统一pkcs7
-  if padding != PaddingKind.NonePad and cpKind != CryptKind.Decrypt:
+  if padding != Sm4PaddingKind.NonePad and cpKind != CryptKind.Decrypt:
     let padL = BLOCK - (talks.len() mod BLOCK)
     talks.add(repeat(uint8(padL), padL))
 
@@ -179,11 +179,11 @@ proc sm4(talks: var seq[uint8]; sm4K: seq[uint8]; cpKind: CryptKind;
 
   for ofs in countup(0, talks.len - 1, BLOCK):
     var blk: seq[uint8] = talks[ofs ..< ofs + BLOCK]
-    if mode == ModeKind.Cbc and cpKind != CryptKind.Decrypt:
+    if mode == Sm4ModeKind.Cbc and cpKind != CryptKind.Decrypt:
       for i in 0 ..< BLOCK:
         blk[i] = blk[i] xor goggaIV[i]
     var sms4Blk = sms4Crypt(blk, rk)
-    if mode == ModeKind.Cbc:
+    if mode == Sm4ModeKind.Cbc:
       if cpKind == CryptKind.Decrypt:
         for i in 0 ..< BLOCK:
           sms4Blk[i] = sms4Blk[i] xor goggaIV[i]
@@ -195,7 +195,7 @@ proc sm4(talks: var seq[uint8]; sm4K: seq[uint8]; cpKind: CryptKind;
     reap.add(sms4Blk)
 
   # 去除填充
-  if padding in {PaddingKind.Pkcs5, PaddingKind.Pkcs7} and cpKind == CryptKind.Decrypt:
+  if padding in {Sm4PaddingKind.Pkcs5, Sm4PaddingKind.Pkcs7} and cpKind == CryptKind.Decrypt:
     let padL = reap[^1].int
     if padL <= 0 or padL > BLOCK:
       raise newException(ValueError, "Invalid padding")
@@ -207,7 +207,7 @@ type Sm4* = object
 
 
 proc encrypt*(sm4: Sm4, talks: string, sm4K: string,
-              padding: PaddingKind = PaddingKind.Pkcs7, mode: ModeKind = ModeKind.Ecb,
+              padding: Sm4PaddingKind = Sm4PaddingKind.Pkcs7, mode: Sm4ModeKind = Sm4ModeKind.Ecb,
               iv: string = ""): string =
   ## SM4加密
   ## 
@@ -229,7 +229,7 @@ proc encrypt*(sm4: Sm4, talks: string, sm4K: string,
 
 
 proc encrypt*(sm4: Sm4, talks: var seq[uint8]; sm4K: seq[uint8];
-              padding: PaddingKind = PaddingKind.Pkcs7; mode: ModeKind = ModeKind.Ecb;
+              padding: Sm4PaddingKind = Sm4PaddingKind.Pkcs7; mode: Sm4ModeKind = Sm4ModeKind.Ecb;
               iv: seq[uint8] = newSeq[uint8]()): seq[uint8] =
   ## SM4加密
   ## 
@@ -248,7 +248,7 @@ proc encrypt*(sm4: Sm4, talks: var seq[uint8]; sm4K: seq[uint8];
 
 
 proc decrypt*(sm4: Sm4, talks: string; sm4K: string;
-              padding: PaddingKind = PaddingKind.Pkcs7; mode: ModeKind = ModeKind.Ecb;
+              padding: Sm4PaddingKind = Sm4PaddingKind.Pkcs7; mode: Sm4ModeKind = Sm4ModeKind.Ecb;
               iv: string = ""): string =
   ## SM4解密
   ## 
@@ -270,7 +270,7 @@ proc decrypt*(sm4: Sm4, talks: string; sm4K: string;
 
 
 proc decrypt*(sm4: Sm4, talks: var seq[uint8]; sm4K: seq[uint8];
-              padding: PaddingKind = PaddingKind.Pkcs7; mode: ModeKind = ModeKind.Ecb;
+              padding: Sm4PaddingKind = Sm4PaddingKind.Pkcs7; mode: Sm4ModeKind = Sm4ModeKind.Ecb;
               iv: seq[uint8] = newSeq[uint8]()): seq[uint8] =
   ## SM4解密
   ## 

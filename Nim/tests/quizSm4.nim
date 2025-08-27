@@ -77,8 +77,8 @@ proc quizSm4TalkCbc() =
   let sm4Quin: Sm4 = Sm4()
 
   let
-    cnTalksCbc = sm4Quin.encrypt(cnTalks, sm4K, PaddingKind.PKCS7, ModeKind.CBC, iv)
-    enTalksCbc = sm4Quin.encrypt(enTalks, sm4K, PaddingKind.PKCS7, ModeKind.CBC, iv)
+    cnTalksCbc = sm4Quin.encrypt(cnTalks, sm4K, Sm4PaddingKind.PKCS7, Sm4ModeKind.CBC, iv)
+    enTalksCbc = sm4Quin.encrypt(enTalks, sm4K, Sm4PaddingKind.PKCS7, Sm4ModeKind.CBC, iv)
 
   assert cnTalksCbc == "BF484CB9EE733CEA62377187BA0CD6CD522A4941BA87A73E" &
                        "4632FC706A6C3860A00C029D50F611A333D37A6EB73CCC6D"
@@ -86,8 +86,8 @@ proc quizSm4TalkCbc() =
                        "4A84E3C407DED4449627652A383036F541FB8DFA762BBC2AE0686" &
                        "BF6D204775C1CF342130DF251A74AD7EE12AE59248FBCB69EF190D"
 
-  assert cnTalks == sm4Quin.decrypt(cnTalksCbc, sm4K, PaddingKind.PKCS7, ModeKind.CBC, iv)
-  assert enTalks == sm4Quin.decrypt(enTalksCbc, sm4K, PaddingKind.PKCS7, ModeKind.CBC, iv)
+  assert cnTalks == sm4Quin.decrypt(cnTalksCbc, sm4K, Sm4PaddingKind.PKCS7, Sm4ModeKind.CBC, iv)
+  assert enTalks == sm4Quin.decrypt(enTalksCbc, sm4K, Sm4PaddingKind.PKCS7, Sm4ModeKind.CBC, iv)
 
 
 proc quizSm4ArrCbc() =
@@ -113,8 +113,8 @@ proc quizSm4ArrCbc() =
     enArrsStale = toSeq(enArrs)
 
   var
-    cnArrsCbc = sm4Quin.encrypt(cnArrs, sm4KArr, PaddingKind.PKCS7, ModeKind.CBC, ivArrs)
-    enArrsCbc = sm4Quin.encrypt(enArrs, sm4KArr, PaddingKind.PKCS7, ModeKind.CBC, ivArrs)
+    cnArrsCbc = sm4Quin.encrypt(cnArrs, sm4KArr, Sm4PaddingKind.PKCS7, Sm4ModeKind.CBC, ivArrs)
+    enArrsCbc = sm4Quin.encrypt(enArrs, sm4KArr, Sm4PaddingKind.PKCS7, Sm4ModeKind.CBC, ivArrs)
 
   assert cnArrsCbc == toSeq([191'u8, 72, 76, 185, 238, 115, 60, 234, 98, 55, 113, 135, 186, 12, 214, 205,
                              82, 42, 73, 65, 186, 135, 167, 62, 70, 50, 252, 112, 106, 108, 56, 96, 160, 12,
@@ -125,8 +125,8 @@ proc quizSm4ArrCbc() =
                              174, 6, 134, 191, 109, 32, 71, 117, 193, 207, 52, 33, 48, 223, 37, 26, 116,
                              173, 126, 225, 42, 229, 146, 72, 251, 203, 105, 239, 25, 13])
 
-  assert cnArrsStale == sm4Quin.decrypt(cnArrsCbc, sm4KArr, PaddingKind.PKCS7, ModeKind.CBC, ivArrs)
-  assert enArrsStale == sm4Quin.decrypt(enArrsCbc, sm4KArr, PaddingKind.PKCS7, ModeKind.CBC, ivArrs)
+  assert cnArrsStale == sm4Quin.decrypt(cnArrsCbc, sm4KArr, Sm4PaddingKind.PKCS7, Sm4ModeKind.CBC, ivArrs)
+  assert enArrsStale == sm4Quin.decrypt(enArrsCbc, sm4KArr, Sm4PaddingKind.PKCS7, Sm4ModeKind.CBC, ivArrs)
 
 
 quizSm4TalkEcb()

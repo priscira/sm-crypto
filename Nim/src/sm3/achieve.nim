@@ -135,7 +135,7 @@ proc sm3Hmac*(sm3K: seq[uint8], val: seq[uint8]): seq[uint8] =
   ##
   ## Parameters
   ## ----------
-  ## sm3_k: HMAC密钥
+  ## sm3K: HMAC密钥
   ## val: 待签名消息
   let blk = 64
   var sm3K = sm3K

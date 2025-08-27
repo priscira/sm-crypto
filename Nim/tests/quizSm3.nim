@@ -2,9 +2,10 @@
 
 discard """
   action: "run"
+  targets: "cpp"
 """
 import std/[strutils]
-import "sm3/sm3"
+import "smCrypto"
 
 
 proc quizSm3HashWithoutHmac() =

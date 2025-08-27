@@ -2,9 +2,10 @@
 
 discard """
   action: "run"
+  targets: "cpp"
 """
 import std/sequtils
-import "sm4/sm4"
+import "smCrypto"
 
 
 proc quizSm4TalkEcb() =

@@ -52,8 +52,9 @@ const CK: array[ROUND, uint32] = [
 ]
 
 
-proc rotl32(val: uint32; left_move_nums: int): uint32 {.inline.} =
+proc rotl32(val: uint32, left_move_nums: int): uint32 {.inline.} =
   ## 32位循环左移
+  let left_move_nums = left_move_nums and 31
   (val shl left_move_nums) or (val shr (32 - left_move_nums))
 
 

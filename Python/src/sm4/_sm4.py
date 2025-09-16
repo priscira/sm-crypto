@@ -130,6 +130,27 @@ def _l2(number):
   return number ^ _rotl(number, 13) ^ _rotl(number, 23)
 
 
+def _furnish_word_every32b(block):
+  """
+  每32处理为一个字
+
+  Parameters
+  ----------
+  block: list[int]
+    16字节明文或密文块
+
+  Returns
+  -------
+  list[int]
+    每32位处理为一个字
+  """
+  return [
+    ((block[4 * i] << 24) | (block[4 * i + 1] << 16) | (block[4 * i + 2] << 8) | block[4 * i + 3])
+    & 0xFFFFFFFF
+    for i in range(4)
+    ]
+
+
 def _sms4_crypt(block, round_keys):
   """
   对16字节明/密文块执行一次SMS4轮变换
@@ -146,11 +167,7 @@ def _sms4_crypt(block, round_keys):
   list[int]
     SMS4轮变换结果
   """
-  # 每32bit处理为一个字
-  words = [(
-             (block[4 * i] << 24) | (block[4 * i + 1] << 16) |
-             (block[4 * i + 2] << 8) | block[4 * i + 3]
-           ) & 0xFFFFFFFF for i in range(4)]
+  words = _furnish_word_every32b(block)
 
   for round_keyi in round_keys:
     gogga = words[1] ^ words[2] ^ words[3] ^ round_keyi
@@ -187,11 +204,7 @@ def _sms4_key_ext(master_key, crypt_flag):
   list[int]
     32个32比特的轮密钥
   """
-  # 每32bit处理为一个字
-  words = [(
-             (master_key[4 * i] << 24) | (master_key[4 * i + 1] << 16) |
-             (master_key[4 * i + 2] << 8) | master_key[4 * i + 3]
-           ) & 0xFFFFFFFF for i in range(4)]
+  words = _furnish_word_every32b(master_key)
 
   words[0] ^= 0xa3b1bac6
   words[1] ^= 0x56aa3350

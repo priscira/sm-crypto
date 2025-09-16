@@ -1,4 +1,4 @@
-import std/[sequtils, algorithm]
+import std/[algorithm, macros, sequtils]
 import "./util"
 
 
@@ -229,8 +229,8 @@ proc encrypt*(sm4: Sm4, talks: string, sm4K: string,
   return arrToHex(sm4(talkArr, sm4K, CryptKind.Encrypt, padding, mode, ivArr))
 
 
-proc encrypt*(sm4: Sm4, talks: var seq[uint8]; sm4K: seq[uint8];
-              padding: Sm4PaddingKind = Sm4PaddingKind.Pkcs7; mode: Sm4ModeKind = Sm4ModeKind.Ecb;
+proc encrypt*(sm4: Sm4, talks: var seq[uint8], sm4K: seq[uint8],
+              padding: Sm4PaddingKind = Sm4PaddingKind.Pkcs7, mode: Sm4ModeKind = Sm4ModeKind.Ecb,
               iv: seq[uint8] = newSeq[uint8]()): seq[uint8] =
   ## SM4加密
   ## 
@@ -248,8 +248,8 @@ proc encrypt*(sm4: Sm4, talks: var seq[uint8]; sm4K: seq[uint8];
   return sm4(talks, sm4K, CryptKind.Encrypt, padding, mode, iv)
 
 
-proc decrypt*(sm4: Sm4, talks: string; sm4K: string;
-              padding: Sm4PaddingKind = Sm4PaddingKind.Pkcs7; mode: Sm4ModeKind = Sm4ModeKind.Ecb;
+proc decrypt*(sm4: Sm4, talks: string, sm4K: string,
+              padding: Sm4PaddingKind = Sm4PaddingKind.Pkcs7, mode: Sm4ModeKind = Sm4ModeKind.Ecb,
               iv: string = ""): string =
   ## SM4解密
   ## 
@@ -270,8 +270,8 @@ proc decrypt*(sm4: Sm4, talks: string; sm4K: string;
   return arrToUtf8(sm4(talkArr, sm4K, CryptKind.Decrypt, padding, mode, ivArr))
 
 
-proc decrypt*(sm4: Sm4, talks: var seq[uint8]; sm4K: seq[uint8];
-              padding: Sm4PaddingKind = Sm4PaddingKind.Pkcs7; mode: Sm4ModeKind = Sm4ModeKind.Ecb;
+proc decrypt*(sm4: Sm4, talks: var seq[uint8], sm4K: seq[uint8],
+              padding: Sm4PaddingKind = Sm4PaddingKind.Pkcs7, mode: Sm4ModeKind = Sm4ModeKind.Ecb,
               iv: seq[uint8] = newSeq[uint8]()): seq[uint8] =
   ## SM4解密
   ## 

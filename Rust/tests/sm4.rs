@@ -1,6 +1,6 @@
 // cargo test --test sm4 -- --show-output
 
-use sm_crypto::sm4::sm4::*;
+use sm_crypto::sm4::*;
 
 
 #[test]
